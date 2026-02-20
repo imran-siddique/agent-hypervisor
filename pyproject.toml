@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-hypervisor"
+version = "1.0.0"
+description = "Agent Hypervisor — Runtime supervisor for multi-agent Shared Sessions with Execution Rings, Joint Liability, Saga Orchestration, and Merkle audit trails"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    {name = "Imran Siddique", email = "imran.siddique@microsoft.com"},
+]
+keywords = [
+    "ai", "agents", "hypervisor", "trust", "multi-agent",
+    "shared-sessions", "liability", "execution-rings", "saga",
+    "governance", "safety", "audit", "merkle",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+# Core: only pydantic required. Integration adapters use Protocol-based
+# interfaces (duck typing), so nexus/iatp/cmvk are optional.
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+# Integration adapters (optional — hypervisor works standalone)
+nexus = [
+    "structlog>=24.1.0",
+]
+full = [
+    "agent-hypervisor[nexus]",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "hypothesis>=6.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.8.0",
+]
+blockchain = [
+    "web3>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/imran-siddique/agent-hypervisor"
+Repository = "https://github.com/imran-siddique/agent-hypervisor"
+Documentation = "https://github.com/imran-siddique/agent-hypervisor#readme"
+"Bug Tracker" = "https://github.com/imran-siddique/agent-hypervisor/issues"
+"Agent OS" = "https://github.com/imran-siddique/agent-os"
+"Agent Mesh" = "https://github.com/imran-siddique/agent-mesh"
+"Agent SRE" = "https://github.com/imran-siddique/agent-sre"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hypervisor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "C4", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.coverage.run]
+source = ["src/hypervisor"]
+branch = true
