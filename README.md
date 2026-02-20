@@ -1,18 +1,36 @@
+<div align="center">
+
 # Agent Hypervisor
 
-> **Runtime supervisor for multi-agent collaboration** — enforcing Execution Rings, Joint Liability, Saga Orchestration, and Merkle audit trails at sub-millisecond latency.
+**Runtime supervisor for multi-agent Shared Sessions with Execution Rings, Joint Liability, and Saga Orchestration**
 
+[![GitHub Stars](https://img.shields.io/github/stars/imran-siddique/agent-hypervisor?style=social)](https://github.com/imran-siddique/agent-hypervisor/stargazers)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4%EF%B8%8F-ff69b4)](https://github.com/sponsors/imran-siddique)
 [![CI](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/imran-siddique/agent-hypervisor/actions)
 [![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
-[![Benchmark](https://img.shields.io/badge/latency-268μs%20full%20pipeline-orange)](benchmarks/)
+[![Benchmark](https://img.shields.io/badge/latency-268%CE%BCs%20pipeline-orange)](benchmarks/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/agent-hypervisor/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Discussions](https://img.shields.io/github/discussions/imran-siddique/agent-hypervisor)](https://github.com/imran-siddique/agent-hypervisor/discussions)
 
-**Part of the Agent Governance Ecosystem:**
-[Agent OS](https://github.com/imran-siddique/agent-os) ·
-[Agent Mesh](https://github.com/imran-siddique/agent-mesh) ·
-[Agent SRE](https://github.com/imran-siddique/agent-sre) ·
-**Agent Hypervisor** (you are here)
+> :star: **If this project helps you, please star it!** It helps others discover Agent Hypervisor.
+
+> :link: **Part of the Agent Governance Ecosystem** -- Works with [Agent OS](https://github.com/imran-siddique/agent-os) (kernel), [AgentMesh](https://github.com/imran-siddique/agent-mesh) (trust network), and [Agent SRE](https://github.com/imran-siddique/agent-sre) (reliability)
+
+[Quick Start](#quick-start) | [Why a Hypervisor?](#why-a-hypervisor) | [Features](#key-features) | [Performance](#performance) | [Modules](#modules) | [Ecosystem](#ecosystem)
+
+</div>
+
+### Integrated Into Major AI Frameworks
+
+<p align="center">
+  <a href="https://github.com/langgenius/dify-plugins/pull/2060"><img src="https://img.shields.io/badge/Dify-65K_%E2%AD%90_Merged-success?style=flat-square" alt="Dify"></a>
+  <a href="https://github.com/run-llama/llama_index/pull/20644"><img src="https://img.shields.io/badge/LlamaIndex-47K_%E2%AD%90_Merged-success?style=flat-square" alt="LlamaIndex"></a>
+  <a href="https://github.com/nicepkg/awesome-github-copilot/pull/26"><img src="https://img.shields.io/badge/Awesome_Copilot-21.6K_%E2%AD%90_Merged-success?style=flat-square" alt="Awesome Copilot"></a>
+  <a href="https://github.com/microsoft/agent-lightning/pull/478"><img src="https://img.shields.io/badge/Agent--Lightning-15K_%E2%AD%90_Merged-success?style=flat-square" alt="Agent-Lightning"></a>
+  <img src="https://img.shields.io/badge/Open_PRs-25+-blue?style=flat-square" alt="Open PRs">
+  <img src="https://img.shields.io/badge/Framework_Issues-94+-blue?style=flat-square" alt="Issues">
+</p>
 
 ## Quick Start
 
@@ -312,6 +330,27 @@ Agent Hypervisor is part of the **Agent Governance Ecosystem** — four speciali
 | [Agent SRE](https://github.com/imran-siddique/agent-sre) | SLO, chaos, cost guardrails | 1,070+ tests |
 | **Agent Hypervisor** | Session isolation & governance runtime | 326 tests |
 
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+- :bug: [Report a Bug](https://github.com/imran-siddique/agent-hypervisor/issues/new?labels=bug)
+- :bulb: [Request a Feature](https://github.com/imran-siddique/agent-hypervisor/issues/new?labels=enhancement)
+- :speech_balloon: [Join Discussions](https://github.com/imran-siddique/agent-hypervisor/discussions)
+- Look for issues labeled [`good first issue`](https://github.com/imran-siddique/agent-hypervisor/labels/good%20first%20issue) to get started
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT -- see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**[Agent OS](https://github.com/imran-siddique/agent-os)** | **[AgentMesh](https://github.com/imran-siddique/agent-mesh)** | **[Agent SRE](https://github.com/imran-siddique/agent-sre)** | **[Agent Hypervisor](https://github.com/imran-siddique/agent-hypervisor)**
+
+*Built with :heart: for the AI agent governance community*
+
+If Agent Hypervisor helps your work, please consider giving it a :star:
+
+</div>
