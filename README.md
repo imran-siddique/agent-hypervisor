@@ -3,7 +3,7 @@
 > **Runtime supervisor for multi-agent collaboration** — enforcing Execution Rings, Joint Liability, Saga Orchestration, and Merkle audit trails at sub-millisecond latency.
 
 [![CI](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/imran-siddique/agent-hypervisor/actions)
-[![Tests](https://img.shields.io/badge/tests-184%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
+[![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
 [![Benchmark](https://img.shields.io/badge/latency-268μs%20full%20pipeline-orange)](benchmarks/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/agent-hypervisor/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -89,6 +89,8 @@ Ring 3 (Sandbox)    — Read-only / research — default for unknown agents
 
 Agents are automatically assigned to rings based on their effective trust score. Ring demotion happens in real-time if trust drops.
 
+**v2.0:** Dynamic ring elevation (sudo with TTL), ring breach detection with circuit breakers, ring inheritance for spawned agents.
+
 ### 🤝 Joint Liability (Trust as Collateral)
 
 High-trust agents can **vouch** for low-trust agents by bonding a percentage of their reputation:
@@ -99,6 +101,8 @@ High-trust agents can **vouch** for low-trust agents by bonding a percentage of 
 
 If the vouchee violates intent, **both agents are penalized** — the voucher's collateral is slashed. Max exposure limits (default: 80% of σ) prevent over-bonding.
 
+**v2.0:** Shapley-value fault attribution (proportional blame, not binary), quarantine-before-terminate, persistent liability ledger for admission decisions.
+
 ### 🔄 Semantic Saga Orchestrator
 
 Multi-step agent transactions with:
@@ -106,6 +110,24 @@ Multi-step agent transactions with:
 - **Retry with backoff** — transient failures retry with exponential delay
 - **Reverse-order compensation** — on failure, all committed steps are undone
 - **Escalation** — if compensation fails, Joint Liability slashing is triggered
+
+**v2.0:** Parallel fan-out (ALL/MAJORITY/ANY policies), semantic checkpoints for partial replay, declarative YAML/dict DSL.
+
+### 🔒 Session Consistency (NEW in v2.0)
+
+- **Vector clocks** — causal consistency for shared VFS state
+- **Intent locks** — READ/WRITE/EXCLUSIVE with deadlock detection
+- **Isolation levels** — SNAPSHOT, READ_COMMITTED, SERIALIZABLE per saga
+
+### 🛡️ Security (NEW in v2.0)
+
+- **Rate limiting** — token bucket per agent per ring (sandbox: 5 rps, root: 100 rps)
+- **Kill switch** — graceful termination with saga step handoff to substitute agents
+
+### 📡 Observability (NEW in v2.0)
+
+- **Structured event bus** — every hypervisor action emits typed events
+- **Causal trace IDs** — distributed tracing with full delegation tree encoding
 
 ### 📋 Delta Audit Engine
 
@@ -181,16 +203,18 @@ merkle_root = await hv.terminate_session(session.sso.session_id)
 | Module | Description | Tests |
 |--------|-------------|-------|
 | `hypervisor.session` | Shared Session Object lifecycle + VFS | 52 |
-| `hypervisor.rings` | 4-ring privilege model + action classification | 10 |
-| `hypervisor.liability` | Vouching, bonding, slashing, liability matrix | 14 |
+| `hypervisor.rings` | 4-ring privilege + elevation + breach detection | 34 |
+| `hypervisor.liability` | Vouching, slashing, attribution, quarantine, ledger | 39 |
 | `hypervisor.reversibility` | Execute/Undo API registry | 4 |
-| `hypervisor.saga` | Semantic saga orchestrator + state machine | 12 |
+| `hypervisor.saga` | Saga orchestrator + fan-out + checkpoints + DSL | 41 |
 | `hypervisor.audit` | Delta engine, Merkle chain, GC, commitment | 10 |
 | `hypervisor.verification` | DID transaction history verification | 4 |
-| `hypervisor.integrations` | Nexus, CMVK, IATP cross-module adapters | — |
+| `hypervisor.observability` | Event bus, causal trace IDs | 22 |
+| `hypervisor.security` | Rate limiter, kill switch | 16 |
+| `hypervisor.integrations` | Nexus, CMVK, IATP cross-module adapters | -- |
 | **Integration** | End-to-end lifecycle, edge cases, security | **24** |
 | **Scenarios** | Cross-module governance pipelines (7 suites) | **18** |
-| **Total** | | **177** |
+| **Total** | | **326** |
 
 ## Test Suite
 
@@ -286,7 +310,7 @@ Agent Hypervisor is part of the **Agent Governance Ecosystem** — four speciali
 | [Agent OS](https://github.com/imran-siddique/agent-os) | Policy enforcement kernel | 1,500+ tests |
 | [Agent Mesh](https://github.com/imran-siddique/agent-mesh) | Cryptographic trust network | 1,400+ tests |
 | [Agent SRE](https://github.com/imran-siddique/agent-sre) | SLO, chaos, cost guardrails | 1,070+ tests |
-| **Agent Hypervisor** | Session isolation & governance runtime | 184 tests |
+| **Agent Hypervisor** | Session isolation & governance runtime | 326 tests |
 
 ## License
 
