@@ -17,6 +17,8 @@
 
 > :link: **Part of the Agent Governance Ecosystem** -- Works with [Agent OS](https://github.com/imran-siddique/agent-os) (kernel), [AgentMesh](https://github.com/imran-siddique/agent-mesh) (trust network), and [Agent SRE](https://github.com/imran-siddique/agent-sre) (reliability)
 
+> 📦 **Install the full stack:** `pip install ai-agent-governance[full]` — [PyPI](https://pypi.org/project/ai-agent-governance/) | [GitHub](https://github.com/imran-siddique/agent-governance)
+
 [Quick Start](#quick-start) | [Why a Hypervisor?](#why-a-hypervisor) | [Features](#key-features) | [Performance](#performance) | [Modules](#modules) | [Ecosystem](#ecosystem)
 
 </div>
