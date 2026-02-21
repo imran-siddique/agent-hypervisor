@@ -302,6 +302,30 @@ ring = await hv.join_session(
 )
 ```
 
+### REST API
+
+Full FastAPI REST API with 22 endpoints and interactive Swagger docs:
+
+```bash
+pip install agent-hypervisor[api]
+uvicorn hypervisor.api.server:app
+# Open http://localhost:8000/docs for Swagger UI
+```
+
+Endpoints: Sessions, Rings, Sagas, Liability, Events, Health.
+
+### Visualization Dashboard
+
+Interactive Streamlit dashboard with 5 tabs:
+
+```bash
+cd examples/dashboard
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Tabs: Session Overview | Execution Rings | Saga Orchestration | Liability & Trust | Event Stream
+
 ## Ecosystem
 
 Agent Hypervisor is part of the **Agent Governance Ecosystem** — four specialized repos that work together:
