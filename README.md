@@ -330,6 +330,20 @@ Agent Hypervisor is part of the **Agent Governance Ecosystem** — four speciali
 | [Agent SRE](https://github.com/imran-siddique/agent-sre) | SLO, chaos, cost guardrails | 1,070+ tests |
 | **Agent Hypervisor** | Session isolation & governance runtime | 326 tests |
 
+## Frequently Asked Questions
+
+**Why use a hypervisor for AI agents?**
+Just as OS hypervisors isolate virtual machines and enforce resource boundaries, an agent hypervisor isolates AI agent sessions and enforces governance boundaries. Without isolation, a misbehaving agent in a shared session can corrupt state, escalate privileges, or cascade failures across the entire system.
+
+**How do Execution Rings differ from traditional access control?**
+Traditional access control is static and binary (allowed/denied). Execution Rings are dynamic and graduated -- agents earn ring privileges based on their trust score, can request temporary elevation with TTL (like `sudo`), and are automatically demoted when trust drops. Ring breach detection catches anomalous behavior before damage occurs.
+
+**What happens when a multi-agent saga fails?**
+The Saga Orchestrator triggers reverse-order compensation for all committed steps. For parallel fan-out sagas, the failure policy determines the response: ALL_MUST_SUCCEED compensates if any branch fails, MAJORITY allows minority failures, and ANY succeeds if at least one branch completes. Semantic checkpoints enable partial replay without re-running completed effects.
+
+**How does Shapley-value fault attribution work?**
+When a saga fails, the hypervisor traces the causal DAG and assigns proportional blame: 50% weight to direct cause, 30% to enabling factors, 20% to temporal proximity. This prevents unfairly penalizing agents that merely contributed to but didn't directly cause a failure.
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
