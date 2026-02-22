@@ -28,8 +28,9 @@
 <p align="center">
   <a href="https://github.com/langgenius/dify-plugins/pull/2060"><img src="https://img.shields.io/badge/Dify-65K_%E2%AD%90_Merged-success?style=flat-square" alt="Dify"></a>
   <a href="https://github.com/run-llama/llama_index/pull/20644"><img src="https://img.shields.io/badge/LlamaIndex-47K_%E2%AD%90_Merged-success?style=flat-square" alt="LlamaIndex"></a>
-  <a href="https://github.com/nicepkg/awesome-github-copilot/pull/26"><img src="https://img.shields.io/badge/Awesome_Copilot-21.6K_%E2%AD%90_Merged-success?style=flat-square" alt="Awesome Copilot"></a>
+  <a href="https://github.com/github/awesome-copilot/pull/755"><img src="https://img.shields.io/badge/Awesome_Copilot-Merged-success?style=flat-square" alt="Awesome Copilot"></a>
   <a href="https://github.com/microsoft/agent-lightning/pull/478"><img src="https://img.shields.io/badge/Agent--Lightning-15K_%E2%AD%90_Merged-success?style=flat-square" alt="Agent-Lightning"></a>
+  <a href="https://github.com/magsther/awesome-opentelemetry/pull/24"><img src="https://img.shields.io/badge/awesome--opentelemetry-listed-orange?style=flat-square" alt="awesome-opentelemetry"></a>
   <img src="https://img.shields.io/badge/Open_PRs-25+-blue?style=flat-square" alt="Open PRs">
   <img src="https://img.shields.io/badge/Framework_Issues-94+-blue?style=flat-square" alt="Issues">
 </p>
