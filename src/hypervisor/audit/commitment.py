@@ -1,8 +1,13 @@
 """
-Blockchain Summary Hash Commitment
+Merkle Summary Hash Commitment
 
 On session termination, computes the Merkle Root of all deltas
-and anchors it for permanent, verifiable audit.
+and stores it for verifiable audit.
+
+NOTE: Commitments are stored in-memory only. Blockchain anchoring
+(Ethereum, IPFS) is planned but not yet implemented. The
+``committed_to`` field and ``blockchain_tx_id`` are reserved for
+future use.
 """
 
 from __future__ import annotations
@@ -27,12 +32,16 @@ class CommitmentRecord:
 
 class CommitmentEngine:
     """
-    Manages Summary Hash commitments to blockchain / permanent storage.
+    Manages Summary Hash commitments for session audit.
 
     On session termination:
     1. Compute Merkle Root of all session deltas
-    2. Write Summary Hash to blockchain / DID document
+    2. Store commitment record in-memory
     3. Associate with session participants' DIDs
+
+    NOTE: Blockchain anchoring is not yet implemented. Commitments are
+    stored in-memory only. Use ``flush_batch()`` to retrieve and
+    persist records to your own storage backend.
     """
 
     def __init__(self) -> None:
@@ -68,7 +77,12 @@ class CommitmentEngine:
         self._batch_queue.append(record)
 
     def flush_batch(self) -> list[CommitmentRecord]:
-        """Flush the batch queue. Returns committed records."""
+        """Flush the batch queue and return records for external persistence.
+
+        The caller is responsible for writing these records to durable
+        storage (database, blockchain, etc.).  This engine does **not**
+        persist records on its own.
+        """
         batch = list(self._batch_queue)
         self._batch_queue.clear()
         return batch

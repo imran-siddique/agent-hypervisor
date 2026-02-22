@@ -85,7 +85,7 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 │  │             │ │              │ │   Delta Audit Engine    │ │
 │  │  Vouch +    │ │  Execute/    │ │                        │ │
 │  │  Bond +     │ │  Undo API    │ │  Merkle Chain + GC     │ │
-│  │  Slash      │ │  Mapping     │ │  Blockchain Commit     │ │
+│  │  Slash      │ │  Mapping     │ │  Merkle Commit         │ │
 │  └─────────────┘ └──────────────┘ └────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
          │                │                    │
@@ -155,7 +155,7 @@ Multi-step agent transactions with:
 Forensic-grade audit trails using:
 - **Semantic diffs** — captures what changed, not full snapshots
 - **Merkle chaining** — each delta references its parent hash (tamper-evident)
-- **Blockchain commitment** — Summary Hash anchored on-chain at session end
+- **Merkle commitment** — Summary Hash computed at session end (blockchain anchoring planned)
 - **Garbage collection** — ephemeral data purged, forensic artifacts retained
 
 ## Performance

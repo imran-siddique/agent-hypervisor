@@ -57,7 +57,7 @@ dev = [
     "mypy>=1.8.0",
 ]
 blockchain = [
-    "web3>=6.0.0",
+    "web3>=6.0.0",  # Reserved for future blockchain anchoring — not yet used
 ]
 
 [project.urls]

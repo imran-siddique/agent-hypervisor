@@ -1,8 +1,14 @@
 """
 DID Transaction History Verification
 
-Verifies an agent's behavioral history by checking Summary Hashes
-from their DID document or blockchain during the IATP handshake.
+Verifies an agent's declared behavioral history by checking Summary Hash
+consistency (duplicate hashes, temporal ordering, hash validity).
+
+NOTE: This verifier checks the *integrity* of history declared by the
+agent during the IATP handshake.  It does NOT resolve DIDs from an
+external DID registry or blockchain.  A malicious agent that fabricates
+a self-consistent history will pass verification.  External DID
+resolution is planned for a future release.
 """
 
 from __future__ import annotations
@@ -52,10 +58,15 @@ class VerificationResult:
 
 class TransactionHistoryVerifier:
     """
-    Verifies agent transaction history via DID documents / blockchain.
+    Verifies agent transaction history integrity.
 
-    During handshake, checks the last N transaction Summary Hashes
-    to validate behavioral consistency.
+    During handshake, checks the last N declared transaction Summary Hashes
+    for internal consistency (duplicates, ordering, validity).
+
+    **Limitations:**
+    - Only validates *declared* history — does not fetch from DID registries
+    - A fabricated but self-consistent history will pass
+    - Results are cached in-memory (no persistent cache)
     """
 
     REQUIRED_HISTORY_DEPTH = 5
