@@ -243,3 +243,42 @@ class StatsResponse(BaseModel):
     active_sagas: int
     total_vouches: int
     event_count: int
+
+
+# ── Audit models ────────────────────────────────────────────────────────────
+
+class CommitmentResponse(BaseModel):
+    session_id: str
+    merkle_root: str
+    participant_dids: list[str]
+    delta_count: int
+    committed_at: str
+    committed_to: str = "local"
+    blockchain_tx_id: Optional[str] = None
+
+class VerifyCommitmentResponse(BaseModel):
+    session_id: str
+    valid: bool
+    committed_root: str
+    expected_root: str
+
+# ── Verification models ─────────────────────────────────────────────────────
+
+class TransactionInput(BaseModel):
+    session_id: str
+    summary_hash: str
+    timestamp: datetime
+    participant_count: int = 0
+
+class VerifyHistoryRequest(BaseModel):
+    agent_did: str
+    transactions: list[TransactionInput]
+
+class VerifyHistoryResponse(BaseModel):
+    agent_did: str
+    status: str
+    transactions_checked: int
+    transactions_found: int
+    inconsistencies: list[str]
+    is_trustworthy: bool
+    cached: bool = False

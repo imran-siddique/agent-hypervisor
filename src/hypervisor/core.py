@@ -83,6 +83,10 @@ class Hypervisor:
         self.commitment = CommitmentEngine()
         self.gc = EphemeralGC(retention_policy)
 
+        # Aliases expected by API layer
+        self.commitment_engine = self.commitment
+        self.history_verifier = self.verifier
+
         # Integration adapters (optional)
         self.nexus = nexus
         self.cmvk = cmvk

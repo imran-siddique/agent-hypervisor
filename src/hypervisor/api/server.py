@@ -31,6 +31,7 @@ from hypervisor.api.models import (
     AddStepRequest,
     AddStepResponse,
     AgentRingResponse,
+    CommitmentResponse,
     CreateSagaResponse,
     CreateSessionRequest,
     CreateSessionResponse,
@@ -49,6 +50,10 @@ from hypervisor.api.models import (
     SessionDetailResponse,
     SessionListItem,
     StatsResponse,
+    TransactionInput,
+    VerifyCommitmentResponse,
+    VerifyHistoryRequest,
+    VerifyHistoryResponse,
     VouchResponse,
 )
 
@@ -643,3 +648,88 @@ async def get_event_stats() -> EventStatsResponse:
         total_events=bus.event_count,
         by_type=bus.type_counts(),
     )
+
+
+# ── Audit endpoints ─────────────────────────────────────────────────────────
+
+@app.get("/api/v1/audit/commitments", response_model=list[CommitmentResponse], tags=["Audit"])
+async def list_commitments():
+    """List all session commitments."""
+    engine = _hv().commitment_engine
+    return [
+        CommitmentResponse(
+            session_id=r.session_id,
+            merkle_root=r.merkle_root,
+            participant_dids=r.participant_dids,
+            delta_count=r.delta_count,
+            committed_at=r.committed_at.isoformat(),
+            committed_to=r.committed_to,
+            blockchain_tx_id=r.blockchain_tx_id,
+        )
+        for r in engine._commitments.values()
+    ]
+
+@app.get("/api/v1/audit/commitments/{session_id}", response_model=CommitmentResponse, tags=["Audit"])
+async def get_commitment(session_id: str):
+    """Get commitment for a specific session."""
+    engine = _hv().commitment_engine
+    record = engine.get_commitment(session_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Commitment not found")
+    return CommitmentResponse(
+        session_id=record.session_id,
+        merkle_root=record.merkle_root,
+        participant_dids=record.participant_dids,
+        delta_count=record.delta_count,
+        committed_at=record.committed_at.isoformat(),
+        committed_to=record.committed_to,
+        blockchain_tx_id=record.blockchain_tx_id,
+    )
+
+@app.post("/api/v1/audit/verify/{session_id}", response_model=VerifyCommitmentResponse, tags=["Audit"])
+async def verify_commitment(session_id: str, expected_root: str = Query(...)):
+    """Verify a session's merkle root matches its commitment."""
+    engine = _hv().commitment_engine
+    record = engine.get_commitment(session_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Commitment not found")
+    valid = engine.verify(session_id, expected_root)
+    return VerifyCommitmentResponse(
+        session_id=session_id,
+        valid=valid,
+        committed_root=record.merkle_root,
+        expected_root=expected_root,
+    )
+
+# ── Verification endpoints ──────────────────────────────────────────────────
+
+@app.post("/api/v1/verify/history", response_model=VerifyHistoryResponse, tags=["Verification"])
+async def verify_agent_history(request: VerifyHistoryRequest):
+    """Verify an agent's transaction history."""
+    from hypervisor.verification.history import TransactionRecord
+    records = [
+        TransactionRecord(
+            session_id=r.session_id,
+            summary_hash=r.summary_hash,
+            timestamp=r.timestamp,
+            participant_count=r.participant_count,
+        )
+        for r in request.transactions
+    ]
+    verifier = _hv().history_verifier
+    result = verifier.verify(request.agent_did, records)
+    return VerifyHistoryResponse(
+        agent_did=result.agent_did,
+        status=result.status.value,
+        transactions_checked=result.transactions_checked,
+        transactions_found=result.transactions_found,
+        inconsistencies=result.inconsistencies,
+        is_trustworthy=result.is_trustworthy,
+        cached=result.cached,
+    )
+
+@app.delete("/api/v1/verify/cache/{agent_did}", tags=["Verification"])
+async def clear_verification_cache(agent_did: str):
+    """Clear cached verification result for an agent."""
+    _hv().history_verifier.clear_cache(agent_did)
+    return {"status": "cleared", "agent_did": agent_did}
