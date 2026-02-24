@@ -1,0 +1,126 @@
+# Community Edition — basic implementation
+"""
+Vouching Protocol — stub implementation.
+
+Community edition: vouching is not enforced. All requests are approved.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Optional
+import uuid
+
+
+@dataclass
+class VouchRecord:
+    """A record of one agent vouching for another within a session."""
+
+    vouch_id: str
+    voucher_did: str
+    vouchee_did: str
+    session_id: str
+    bonded_sigma_pct: float
+    bonded_amount: float
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    expiry: Optional[datetime] = None
+    is_active: bool = True
+    released_at: Optional[datetime] = None
+
+    @property
+    def is_expired(self) -> bool:
+        if self.expiry is None:
+            return False
+        return datetime.now(timezone.utc) > self.expiry
+
+
+class VouchingEngine:
+    """
+    Vouching stub (community edition: approves all, no bonding).
+    """
+
+    SCORE_SCALE = 1000.0
+    MIN_VOUCHER_SCORE = 0.50
+    DEFAULT_BOND_PCT = 0.20
+    DEFAULT_MAX_EXPOSURE = 0.80
+
+    def __init__(self, max_exposure: Optional[float] = None) -> None:
+        self._vouches: dict[str, VouchRecord] = {}
+        self.max_exposure = max_exposure or self.DEFAULT_MAX_EXPOSURE
+
+    def vouch(
+        self,
+        voucher_did: str,
+        vouchee_did: str,
+        session_id: str,
+        voucher_sigma: float,
+        bond_pct: Optional[float] = None,
+        expiry: Optional[datetime] = None,
+    ) -> VouchRecord:
+        """Create a vouching record (community edition: always succeeds, no bonding)."""
+        record = VouchRecord(
+            vouch_id=f"vouch:{uuid.uuid4()}",
+            voucher_did=voucher_did,
+            vouchee_did=vouchee_did,
+            session_id=session_id,
+            bonded_sigma_pct=0.0,
+            bonded_amount=0.0,
+        )
+        self._vouches[record.vouch_id] = record
+        return record
+
+    def compute_sigma_eff(
+        self,
+        vouchee_did: str,
+        session_id: str,
+        vouchee_sigma: float,
+        risk_weight: float,
+    ) -> float:
+        """Return vouchee's own score (community edition: no voucher boost)."""
+        return vouchee_sigma
+
+    def get_vouchers_for(self, agent_did: str, session_id: str) -> list[VouchRecord]:
+        """Get all vouches for an agent in a session."""
+        return [
+            v for v in self._vouches.values()
+            if v.vouchee_did == agent_did
+            and v.session_id == session_id
+            and v.is_active
+        ]
+
+    def get_total_exposure(self, voucher_did: str, session_id: str) -> float:
+        """Always zero in community edition."""
+        return 0.0
+
+    def release_bond(self, vouch_id: str) -> None:
+        """Release a vouching bond."""
+        if vouch_id not in self._vouches:
+            raise VouchingError(f"Vouch {vouch_id} not found")
+        record = self._vouches[vouch_id]
+        record.is_active = False
+        record.released_at = datetime.now(timezone.utc)
+
+    def release_session_bonds(self, session_id: str) -> int:
+        """Release all bonds for a session."""
+        count = 0
+        for v in self._vouches.values():
+            if v.session_id == session_id and v.is_active:
+                v.is_active = False
+                v.released_at = datetime.now(timezone.utc)
+                count += 1
+        return count
+
+    def _active_vouches_for(
+        self, agent_did: str, session_id: str
+    ) -> list[VouchRecord]:
+        return self.get_vouchers_for(agent_did, session_id)
+
+    def _creates_cycle(
+        self, voucher_did: str, vouchee_did: str, session_id: str
+    ) -> bool:
+        return False
+
+
+class VouchingError(Exception):
+    """Raised for vouching protocol violations."""
