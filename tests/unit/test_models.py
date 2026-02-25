@@ -13,24 +13,24 @@ from hypervisor.models import (
 
 
 class TestExecutionRing:
-    def test_from_sigma_eff_sandbox(self):
-        assert ExecutionRing.from_sigma_eff(0.3) == ExecutionRing.RING_3_SANDBOX
+    def test_from_eff_score_sandbox(self):
+        assert ExecutionRing.from_eff_score(0.3) == ExecutionRing.RING_3_SANDBOX
 
-    def test_from_sigma_eff_standard(self):
-        assert ExecutionRing.from_sigma_eff(0.7) == ExecutionRing.RING_2_STANDARD
+    def test_from_eff_score_standard(self):
+        assert ExecutionRing.from_eff_score(0.7) == ExecutionRing.RING_2_STANDARD
 
-    def test_from_sigma_eff_privileged_with_consensus(self):
-        assert ExecutionRing.from_sigma_eff(0.96, has_consensus=True) == ExecutionRing.RING_1_PRIVILEGED
+    def test_from_eff_score_privileged_with_consensus(self):
+        assert ExecutionRing.from_eff_score(0.96, has_consensus=True) == ExecutionRing.RING_1_PRIVILEGED
 
-    def test_from_sigma_eff_privileged_without_consensus_gets_standard(self):
-        assert ExecutionRing.from_sigma_eff(0.96, has_consensus=False) == ExecutionRing.RING_2_STANDARD
+    def test_from_eff_score_privileged_without_consensus_gets_standard(self):
+        assert ExecutionRing.from_eff_score(0.96, has_consensus=False) == ExecutionRing.RING_2_STANDARD
 
-    def test_from_sigma_eff_boundary_060(self):
+    def test_from_eff_score_boundary_060(self):
         # Exactly 0.60 is NOT > 0.60, so sandbox
-        assert ExecutionRing.from_sigma_eff(0.60) == ExecutionRing.RING_3_SANDBOX
+        assert ExecutionRing.from_eff_score(0.60) == ExecutionRing.RING_3_SANDBOX
 
-    def test_from_sigma_eff_just_above_060(self):
-        assert ExecutionRing.from_sigma_eff(0.601) == ExecutionRing.RING_2_STANDARD
+    def test_from_eff_score_just_above_060(self):
+        assert ExecutionRing.from_eff_score(0.601) == ExecutionRing.RING_2_STANDARD
 
 
 class TestReversibilityLevel:

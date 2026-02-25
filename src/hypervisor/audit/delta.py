@@ -3,7 +3,7 @@
 Delta Audit Engine — simple append-only log.
 
 Community edition: records (timestamp, action, data) tuples.
-No hash chaining or tamper-evidence.
+No audit loging or tamper-evidence.
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ class DeltaEngine:
     Simple append-only audit log.
 
     Community edition: captures deltas as timestamped records.
-    No hash chain verification.
+    No audit log verification.
     """
 
     def __init__(self, session_id: str) -> None:

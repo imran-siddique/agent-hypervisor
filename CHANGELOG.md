@@ -14,18 +14,18 @@ All notable changes to Agent Hypervisor will be documented in this file.
 - **Ring Breach Detector** (`rings/breach_detector.py`) — sliding window anomaly scoring for ring call patterns, circuit breaker on HIGH/CRITICAL severity
 
 ### Added — Liability Improvements
-- **Causal Attribution** (`liability/attribution.py`) — Shapley-value inspired proportional fault scoring (replaces binary guilty/not-guilty)
+- **Fault Logging** (`liability/attribution.py`) — Shapley-value inspired proportional fault scoring (replaces binary guilty/not-guilty)
 - **Quarantine Manager** (`liability/quarantine.py`) — read-only isolation before termination, forensic data preservation, auto-release with timeout
 - **Persistent Liability Ledger** (`liability/ledger.py`) — per-agent historical risk scoring, admission decisions (admit/probation/deny)
 
 ### Added — Saga Improvements
 - **Parallel Fan-Out** (`saga/fan_out.py`) — concurrent branch execution with `ALL_MUST_SUCCEED`, `MAJORITY_MUST_SUCCEED`, `ANY_MUST_SUCCEED` policies
-- **Semantic Checkpoints** (`saga/checkpoint.py`) — capture what goal was achieved (not just state), enabling partial replay without re-running completed effects
+- **Execution Checkpoints** (`saga/checkpoint.py`) — capture what goal was achieved (not just state), enabling partial replay without re-running completed effects
 - **Declarative Saga DSL** (`saga/dsl.py`) — define saga topology via dict/YAML with validation, fan-out support, and SagaStep conversion
 
 ### Added — Session Improvements
-- **Vector Clocks** (`session/vector_clock.py`) — causal consistency enforcement, stale-write rejection, automatic merge on read
-- **Intent Locks** (`session/intent_locks.py`) — READ/WRITE/EXCLUSIVE lock declarations with contention detection and deadlock prevention (wait-for graph)
+- **Version Counters** (`session/vector_clock.py`) — causal consistency enforcement, stale-write rejection, automatic merge on read
+- **Resource Locks** (`session/intent_locks.py`) — READ/WRITE/EXCLUSIVE lock declarations with contention detection and lock timeout prevention (wait-for graph)
 - **Isolation Levels** (`session/isolation.py`) — SNAPSHOT, READ_COMMITTED, SERIALIZABLE per saga (low-stakes sagas skip coordination cost)
 
 ### Added — Security
@@ -42,10 +42,10 @@ All notable changes to Agent Hypervisor will be documented in this file.
 ### Added
 - **Core Hypervisor** orchestrator with session lifecycle management
 - **Shared Session Object (SSO)** with VFS, snapshots, and consistency modes
-- **4-Ring Execution Model** (Ring 0 Root → Ring 3 Sandbox) based on σ_eff trust scores
-- **Joint Liability Engine** with vouching, bonding, and proportional slashing
+- **4-Ring Execution Model** (Ring 0 Root → Ring 3 Sandbox) based on eff_score trust scores
+- **Joint Liability Engine** with sponsorship, bonding, and proportional penalty
 - **Saga Orchestrator** with step timeouts, retries, and reverse-order compensation
-- **Hash-Chained Audit** with delta capture, commitment engine, and ephemeral GC
+- **Audit-Logged Trail** with delta capture, commitment engine, and ephemeral GC
 - **Reversibility Registry** for execute/undo API mapping with 4 reversibility levels
 - **Transaction History Verifier** for DID-based trust verification
 - **Integration Adapters** (Protocol-based, zero hard dependencies):

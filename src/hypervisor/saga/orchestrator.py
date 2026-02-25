@@ -31,7 +31,7 @@ class SagaOrchestrator:
     Forward execution records each step. On failure, the orchestrator
     iterates the Reversibility Registry in reverse order, calling
     Undo_API for each committed step. If any Undo_API fails,
-    Joint Liability slashing is triggered.
+    Joint Liability penalty is triggered.
     """
 
     DEFAULT_MAX_RETRIES = 2
@@ -189,7 +189,7 @@ class SagaOrchestrator:
             saga.transition(SagaState.ESCALATED)
             saga.error = (
                 f"{len(failed_compensations)} step(s) failed compensation — "
-                "Joint Liability slashing triggered"
+                "Joint Liability penalty triggered"
             )
         else:
             saga.transition(SagaState.COMPLETED)

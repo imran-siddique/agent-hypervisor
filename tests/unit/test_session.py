@@ -12,12 +12,12 @@ from hypervisor.session.sso import SessionVFS
 
 class TestSharedSessionObject:
     def setup_method(self):
-        self.config = SessionConfig(max_participants=3, min_sigma_eff=0.5)
+        self.config = SessionConfig(max_participants=3, min_eff_score=0.5)
         self.sso = SharedSessionObject(config=self.config, creator_did="did:mesh:admin")
 
     def test_lifecycle_happy_path(self):
         self.sso.begin_handshake()
-        self.sso.join("did:mesh:a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:mesh:a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         self.sso.activate()
         self.sso.terminate()
         self.sso.archive()
@@ -30,17 +30,17 @@ class TestSharedSessionObject:
 
     def test_max_participants_enforced(self):
         self.sso.begin_handshake()
-        self.sso.join("did:a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
-        self.sso.join("did:b", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
-        self.sso.join("did:c", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:b", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:c", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         with pytest.raises(SessionParticipantError, match="capacity"):
-            self.sso.join("did:d", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+            self.sso.join("did:d", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
 
     def test_duplicate_agent_rejected(self):
         self.sso.begin_handshake()
-        self.sso.join("did:a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         with pytest.raises(SessionParticipantError, match="already in session"):
-            self.sso.join("did:a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+            self.sso.join("did:a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
 
     def test_force_consistency_mode(self):
         self.sso.force_consistency_mode(ConsistencyMode.STRONG)
@@ -48,7 +48,7 @@ class TestSharedSessionObject:
 
     def test_leave_marks_inactive(self):
         self.sso.begin_handshake()
-        self.sso.join("did:a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         self.sso.leave("did:a")
         assert self.sso.participant_count == 0
 

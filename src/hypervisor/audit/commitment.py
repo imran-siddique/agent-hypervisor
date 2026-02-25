@@ -55,7 +55,7 @@ class CommitmentEngine:
         return record
 
     def verify(self, session_id: str, expected_root: str) -> bool:
-        """Verify a session's hash chain root."""
+        """Verify a session's audit log root."""
         record = self._commitments.get(session_id)
         if not record:
             return False

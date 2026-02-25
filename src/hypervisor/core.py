@@ -119,7 +119,7 @@ class Hypervisor:
         2. Register actions in Reversibility Registry
         3. Force Strong mode if non-reversible actions exist
         4. Verify DID transaction history
-        5. Resolve σ_eff (Nexus adapter or raw fallback) and assign ring
+        5. Resolve eff_score (Nexus adapter or raw fallback) and assign ring
         """
         managed = self._get_session(session_id)
 
@@ -149,15 +149,15 @@ class Hypervisor:
         verification = self.verifier.verify(agent_did)
 
         # Step 5: Resolve effective score
-        sigma_eff = sigma_raw
+        eff_score = sigma_raw
 
         # Nexus enrichment: if adapter is available and no explicit sigma given
         if self.nexus and sigma_raw == 0.0:
-            sigma_eff = self.nexus.resolve_sigma(
+            eff_score = self.nexus.resolve_sigma(
                 agent_did,
                 history=agent_history,
             )
-            logger.debug("Nexus resolved sigma=%.3f for %s", sigma_eff, agent_did)
+            logger.debug("Nexus resolved sigma=%.3f for %s", eff_score, agent_did)
         elif self.nexus and agent_history:
             # Even with explicit sigma, Nexus can verify/enrich
             nexus_sigma = self.nexus.resolve_sigma(
@@ -165,9 +165,9 @@ class Hypervisor:
                 history=agent_history,
             )
             # Use the lower of provided vs Nexus (conservative)
-            sigma_eff = min(sigma_raw, nexus_sigma)
+            eff_score = min(sigma_raw, nexus_sigma)
 
-        ring = self.ring_enforcer.compute_ring(sigma_eff)
+        ring = self.ring_enforcer.compute_ring(eff_score)
 
         # Probationary agents get sandbox
         if not verification.is_trustworthy:
@@ -177,7 +177,7 @@ class Hypervisor:
         managed.sso.join(
             agent_did=agent_did,
             sigma_raw=sigma_raw,
-            sigma_eff=sigma_eff,
+            eff_score=eff_score,
             ring=ring,
         )
 
@@ -193,7 +193,7 @@ class Hypervisor:
         Terminate a session and commit audit trail.
 
         Returns:
-            hash chain root summary hash, or None if audit disabled
+            audit log root summary hash, or None if audit disabled
         """
         managed = self._get_session(session_id)
         managed.sso.terminate()
@@ -260,13 +260,13 @@ class Hypervisor:
             managed = self._get_session(session_id)
             participant = managed.sso.get_participant(agent_did)
             agent_scores = {
-                p.agent_did: p.sigma_eff
+                p.agent_did: p.eff_score
                 for p in managed.sso.participants
             }
             self.slashing.slash(
                 vouchee_did=agent_did,
                 session_id=session_id,
-                vouchee_sigma=participant.sigma_eff,
+                vouchee_sigma=participant.eff_score,
                 risk_weight=0.95,
                 reason=f"Verification drift: {result.drift_score:.3f} ({result.severity.value})",
                 agent_scores=agent_scores,
@@ -279,7 +279,7 @@ class Hypervisor:
                     reason=f"Behavioral drift: {result.drift_score:.3f}",
                     severity=severity,
                 )
-            logger.warning("Agent %s slashed: drift=%.3f", agent_did, result.drift_score)
+            logger.warning("Agent %s penalized: drift=%.3f", agent_did, result.drift_score)
 
         return result
 

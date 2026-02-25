@@ -91,7 +91,7 @@ class NexusAdapter:
         severity: str = "medium",
         evidence_hash: Optional[str] = None,
     ) -> None:
-        """Report a slashing event to the trust backend."""
+        """Report a penalty event to the trust backend."""
         if self._scorer:
             self._scorer.slash_reputation(
                 agent_did=agent_did,

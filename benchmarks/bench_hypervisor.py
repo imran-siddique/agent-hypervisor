@@ -4,9 +4,9 @@ Hypervisor Performance Benchmarks
 Measures latency and throughput of all hypervisor subsystems:
 - Session creation and lifecycle
 - Ring computation and enforcement
-- Vouching and σ_eff calculation
+- Sponsorship and eff_score calculation
 - Saga step execution
-- Delta audit capture and hash chain root computation
+- Delta audit capture and audit log root computation
 - End-to-end governance pipeline
 """
 
@@ -125,18 +125,18 @@ def bench_ring_computation():
     enforcer.compute_ring(0.85)
 
 # ---------------------------------------------------------------------------
-# Benchmark: Vouching + σ_eff
+# Benchmark: Sponsorship + eff_score
 # ---------------------------------------------------------------------------
 
 ve = VouchingEngine()
 _vouch_counter = [0]
 
-@benchmark("vouching_sigma_eff", iterations=10000)
-def bench_sigma_eff():
+@benchmark("sponsorship_eff_score", iterations=10000)
+def bench_eff_score():
     _vouch_counter[0] += 1
     sid = f"bench-{_vouch_counter[0]}"
     ve.vouch(f"did:v:{_vouch_counter[0]}", f"did:e:{_vouch_counter[0]}", sid, 0.9, bond_pct=0.2)
-    ve.compute_sigma_eff(f"did:e:{_vouch_counter[0]}", sid, 0.4, risk_weight=0.5)
+    ve.compute_eff_score(f"did:e:{_vouch_counter[0]}", sid, 0.4, risk_weight=0.5)
 
 # ---------------------------------------------------------------------------
 # Benchmark: Delta Capture
@@ -151,23 +151,23 @@ def bench_delta_capture():
     )
 
 # ---------------------------------------------------------------------------
-# Benchmark: Hash Chain Root (10 deltas)
+# Benchmark: Audit Log Root (10 deltas)
 # ---------------------------------------------------------------------------
 
 @benchmark("hash_chain_root_10_deltas", iterations=10000)
 def bench_hash_chain_root_10():
-    de = DeltaEngine("bench-hash-chain")
+    de = DeltaEngine("bench-audit-log")
     for i in range(10):
         de.capture("did:mesh:a", [VFSChange(path=f"/f{i}", operation="add", content_hash=f"h{i}")])
     de.compute_hash_chain_root()
 
 # ---------------------------------------------------------------------------
-# Benchmark: Hash Chain Root (100 deltas)
+# Benchmark: Audit Log Root (100 deltas)
 # ---------------------------------------------------------------------------
 
 @benchmark("hash_chain_root_100_deltas", iterations=1000)
 def bench_hash_chain_root_100():
-    de = DeltaEngine("bench-hash-chain-100")
+    de = DeltaEngine("bench-audit-log-100")
     for i in range(100):
         de.capture("did:mesh:a", [VFSChange(path=f"/f{i}", operation="add", content_hash=f"h{i}")])
     de.compute_hash_chain_root()
@@ -251,7 +251,7 @@ def main():
 
     benchmarks = [
         bench_ring_computation,
-        bench_sigma_eff,
+        bench_eff_score,
         bench_delta_capture,
         bench_hash_chain_root_10,
         bench_hash_chain_root_100,
@@ -292,9 +292,9 @@ def main():
             )
         f.write("\n## Key Takeaways\n\n")
         f.write("- **Ring computation**: Sub-microsecond — zero overhead for privilege checks\n")
-        f.write("- **Vouching + σ_eff**: Single-digit microseconds — real-time trust scoring\n")
+        f.write("- **Sponsorship + eff_score**: Single-digit microseconds — real-time trust scoring\n")
         f.write("- **Delta audit**: Microsecond-level — forensic logging adds negligible latency\n")
-        f.write("- **Hash chain verification**: Scales linearly with delta count, remains sub-millisecond\n")
+        f.write("- **Audit log verification**: Scales linearly with delta count, remains sub-millisecond\n")
         f.write("- **Full pipeline**: Session + audit + saga + terminate in < 1ms\n")
         f.write("\n## Methodology\n\n")
         f.write("- Python 3.13, Windows, in-memory (no I/O)\n")

@@ -17,7 +17,7 @@ class TestRingEnforcer:
         result = self.enforcer.check(
             agent_ring=ExecutionRing.RING_3_SANDBOX,
             action=action,
-            sigma_eff=0.3,
+            eff_score=0.3,
         )
         assert result.allowed
 
@@ -29,7 +29,7 @@ class TestRingEnforcer:
         result = self.enforcer.check(
             agent_ring=ExecutionRing.RING_3_SANDBOX,
             action=action,
-            sigma_eff=0.7,
+            eff_score=0.7,
         )
         assert not result.allowed
         assert "insufficient" in result.reason.lower()
@@ -42,7 +42,7 @@ class TestRingEnforcer:
         result = self.enforcer.check(
             agent_ring=ExecutionRing.RING_1_PRIVILEGED,
             action=action,
-            sigma_eff=0.96,
+            eff_score=0.96,
             has_consensus=False,
         )
         # Community edition: no consensus requirement, access granted if ring is sufficient
@@ -56,7 +56,7 @@ class TestRingEnforcer:
         result = self.enforcer.check(
             agent_ring=ExecutionRing.RING_1_PRIVILEGED,
             action=action,
-            sigma_eff=0.96,
+            eff_score=0.96,
             has_consensus=True,
         )
         assert result.allowed
@@ -68,15 +68,15 @@ class TestRingEnforcer:
         result = self.enforcer.check(
             agent_ring=ExecutionRing.RING_0_ROOT,
             action=action,
-            sigma_eff=1.0,
+            eff_score=1.0,
             has_sre_witness=False,
         )
         assert not result.allowed
         assert result.requires_sre_witness
 
     def test_should_demote(self):
-        assert self.enforcer.should_demote(ExecutionRing.RING_2_STANDARD, sigma_eff=0.3)
-        assert not self.enforcer.should_demote(ExecutionRing.RING_2_STANDARD, sigma_eff=0.7)
+        assert self.enforcer.should_demote(ExecutionRing.RING_2_STANDARD, eff_score=0.3)
+        assert not self.enforcer.should_demote(ExecutionRing.RING_2_STANDARD, eff_score=0.7)
 
 
 class TestActionClassifier:

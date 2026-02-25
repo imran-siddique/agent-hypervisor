@@ -4,9 +4,9 @@ Hypervisor Demo -- Agent Governance in 60 Seconds
 
 Demonstrates the full lifecycle of the Agent Hypervisor:
   1. Session creation with configurable governance
-  2. Agent admission via trust scoring (sigma_eff -> ring assignment)
+  2. Agent admission via trust scoring (eff_score -> ring assignment)
   3. Saga orchestration with reversibility tracking
-  4. Liability enforcement (vouching, bonding, slashing)
+  4. Liability enforcement (sponsorship, bonding, penalty)
   5. Audit trail with hash commitment
 
 Run:
@@ -110,7 +110,7 @@ async def demo_session_lifecycle() -> None:
 
     # Terminate and get hash commitment
     hash_chain_root = await hv.terminate_session(session.sso.session_id)
-    step(f"Session terminated -- hash chain root: {hash_chain_root[:16]}...")
+    step(f"Session terminated -- audit log root: {hash_chain_root[:16]}...")
 
     print(f"\n  {BOLD}Ring assignments show trust-based isolation:{RESET}")
     print(f"    Ring 1 (High Trust):  sigma >= 0.95 + consensus")
@@ -174,15 +174,15 @@ async def demo_saga() -> None:
     print(f"    All-or-nothing semantics for multi-agent workflows")
 
 
-# ── Demo 3: Liability & Slashing ────────────────────────────────────
+# ── Demo 3: Liability & Penalty ────────────────────────────────────
 
 
 async def demo_liability() -> None:
-    banner("Demo 3: Liability -- Vouching, Bonding, and Slashing")
+    banner("Demo 3: Liability -- Sponsorship, Bonding, and Penalty")
 
     hv = Hypervisor(max_exposure=10.0)
 
-    # Voucher posts a bond for an agent
+    # Sponsor posts a bond for an agent
     record = hv.vouching.vouch(
         voucher_did="did:mesh:sponsor",
         vouchee_did="did:mesh:new-agent",
@@ -194,7 +194,7 @@ async def demo_liability() -> None:
     exposure = hv.vouching.get_total_exposure("did:mesh:sponsor", "session-001")
     step(f"Sponsor exposure: {exposure:.2f}/10.0 max")
 
-    # Agent misbehaves -- slash!
+    # Agent misbehaves -- penalize!
     slash_result = hv.slashing.slash(
         vouchee_did="did:mesh:new-agent",
         session_id="session-001",
@@ -203,14 +203,14 @@ async def demo_liability() -> None:
         reason="policy_violation",
         agent_scores={"did:mesh:new-agent": 0.30},
     )
-    fail(f"Agent slashed! sigma: {slash_result.vouchee_sigma_before} -> {slash_result.vouchee_sigma_after}")
-    step(f"Slash reason: {slash_result.reason}")
+    fail(f"Agent penalized! sigma: {slash_result.vouchee_sigma_before} -> {slash_result.vouchee_sigma_after}")
+    step(f"Penalty reason: {slash_result.reason}")
     for clip in slash_result.voucher_clips:
-        warn(f"Voucher {clip.voucher_did.split(':')[-1]} clipped: sigma {clip.sigma_before} -> {clip.sigma_after}")
+        warn(f"Sponsor {clip.voucher_did.split(':')[-1]} clipped: sigma {clip.sigma_before} -> {clip.sigma_after}")
 
     print(f"\n  {BOLD}Liability model:{RESET}")
-    print(f"    Sponsors vouch for agents with token bonds")
-    print(f"    Misbehavior triggers proportional slashing")
+    print(f"    Sponsors sponsor for agents with token bonds")
+    print(f"    Misbehavior triggers proportional penalty")
     print(f"    Maximum exposure limits protect sponsors")
 
 
@@ -249,8 +249,8 @@ async def demo_audit() -> None:
 
     step(f"Total deltas: {session.delta_engine.turn_count}")
 
-    hash chain = await hv.terminate_session(session.sso.session_id)
-    step(f"hash chain root: {hash chain}")
+    audit log = await hv.terminate_session(session.sso.session_id)
+    step(f"audit log root: {audit log}")
 
     # Verify commitment
     commitment = hv.commitment.get_commitment(session.sso.session_id)
@@ -258,7 +258,7 @@ async def demo_audit() -> None:
         step(f"Commitment stored for session")
         step(f"  Participants: {len(commitment.participant_dids)}")
         step(f"  Deltas: {commitment.delta_count}")
-        step(f"  Verified: {hv.commitment.verify(session.sso.session_id, hash chain)}")
+        step(f"  Verified: {hv.commitment.verify(session.sso.session_id, audit log)}")
 
     print(f"\n  {BOLD}Audit guarantees:{RESET}")
     print(f"    Every agent action is delta-captured")
@@ -374,7 +374,7 @@ async def main() -> None:
     print(f"  The Agent Hypervisor provides:")
     print(f"    - Ring-based execution isolation (4 trust tiers)")
     print(f"    - Saga orchestration with automatic compensation")
-    print(f"    - Economic liability (vouching + slashing)")
+    print(f"    - Economic liability (sponsorship + penalty)")
     print(f"    - hash-committed audit trails")
     print(f"    - Pluggable integrations (Nexus, Verification, IATP)")
     print(f"\n  {BOLD}184 tests passing | 268us full pipeline | Zero dependencies{RESET}")

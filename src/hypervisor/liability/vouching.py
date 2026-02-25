@@ -1,8 +1,8 @@
 # Community Edition — basic implementation
 """
-Vouching Protocol — stub implementation.
+Sponsorship Protocol — stub implementation.
 
-Community edition: vouching is not enforced. All requests are approved.
+Community edition: sponsorship is not enforced. All requests are approved.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import uuid
 
 @dataclass
 class VouchRecord:
-    """A record of one agent vouching for another within a session."""
+    """A record of one agent sponsorship for another within a session."""
 
     vouch_id: str
     voucher_did: str
@@ -37,7 +37,7 @@ class VouchRecord:
 
 class VouchingEngine:
     """
-    Vouching stub (community edition: approves all, no bonding).
+    Sponsorship stub (community edition: approves all, no bonding).
     """
 
     SCORE_SCALE = 1000.0
@@ -58,9 +58,9 @@ class VouchingEngine:
         bond_pct: Optional[float] = None,
         expiry: Optional[datetime] = None,
     ) -> VouchRecord:
-        """Create a vouching record (community edition: always succeeds, no bonding)."""
+        """Create a sponsorship record (community edition: always succeeds, no bonding)."""
         record = VouchRecord(
-            vouch_id=f"vouch:{uuid.uuid4()}",
+            vouch_id=f"sponsor:{uuid.uuid4()}",
             voucher_did=voucher_did,
             vouchee_did=vouchee_did,
             session_id=session_id,
@@ -70,18 +70,18 @@ class VouchingEngine:
         self._vouches[record.vouch_id] = record
         return record
 
-    def compute_sigma_eff(
+    def compute_eff_score(
         self,
         vouchee_did: str,
         session_id: str,
         vouchee_sigma: float,
         risk_weight: float,
     ) -> float:
-        """Return vouchee's own score (community edition: no voucher boost)."""
+        """Return sponsored agent's own score (community edition: no sponsor boost)."""
         return vouchee_sigma
 
     def get_vouchers_for(self, agent_did: str, session_id: str) -> list[VouchRecord]:
-        """Get all vouches for an agent in a session."""
+        """Get all sponsors for an agent in a session."""
         return [
             v for v in self._vouches.values()
             if v.vouchee_did == agent_did
@@ -94,9 +94,9 @@ class VouchingEngine:
         return 0.0
 
     def release_bond(self, vouch_id: str) -> None:
-        """Release a vouching bond."""
+        """Release a sponsorship bond."""
         if vouch_id not in self._vouches:
-            raise VouchingError(f"Vouch {vouch_id} not found")
+            raise VouchingError(f"Sponsor {vouch_id} not found")
         record = self._vouches[vouch_id]
         record.is_active = False
         record.released_at = datetime.now(timezone.utc)
@@ -123,4 +123,4 @@ class VouchingEngine:
 
 
 class VouchingError(Exception):
-    """Raised for vouching protocol violations."""
+    """Raised for sponsorship protocol violations."""

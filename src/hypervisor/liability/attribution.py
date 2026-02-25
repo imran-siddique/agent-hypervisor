@@ -1,6 +1,6 @@
 # Community Edition — basic implementation
 """
-Causal Attribution — stub implementation.
+Fault Logging — stub implementation.
 
 Community edition: assigns full liability to the direct-cause agent.
 No causal chain analysis.

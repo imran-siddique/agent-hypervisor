@@ -21,7 +21,7 @@ class RingCheckResult:
     allowed: bool
     required_ring: ExecutionRing
     agent_ring: ExecutionRing
-    sigma_eff: float
+    eff_score: float
     reason: str
     requires_consensus: bool = False
     requires_sre_witness: bool = False
@@ -46,7 +46,7 @@ class RingEnforcer:
         self,
         agent_ring: ExecutionRing,
         action: ActionDescriptor,
-        sigma_eff: float,
+        eff_score: float,
         has_consensus: bool = False,
         has_sre_witness: bool = False,
     ) -> RingCheckResult:
@@ -59,7 +59,7 @@ class RingEnforcer:
                 allowed=False,
                 required_ring=required,
                 agent_ring=agent_ring,
-                sigma_eff=sigma_eff,
+                eff_score=eff_score,
                 reason="Ring 0 actions are not available in community edition",
                 requires_sre_witness=True,
             )
@@ -70,7 +70,7 @@ class RingEnforcer:
                 allowed=False,
                 required_ring=required,
                 agent_ring=agent_ring,
-                sigma_eff=sigma_eff,
+                eff_score=eff_score,
                 reason=(
                     f"Agent ring {agent_ring.value} insufficient for "
                     f"required ring {required.value}"
@@ -81,15 +81,15 @@ class RingEnforcer:
             allowed=True,
             required_ring=required,
             agent_ring=agent_ring,
-            sigma_eff=sigma_eff,
+            eff_score=eff_score,
             reason="Access granted",
         )
 
-    def compute_ring(self, sigma_eff: float, has_consensus: bool = False) -> ExecutionRing:
+    def compute_ring(self, eff_score: float, has_consensus: bool = False) -> ExecutionRing:
         """Compute ring assignment from trust score."""
-        return ExecutionRing.from_sigma_eff(sigma_eff, has_consensus)
+        return ExecutionRing.from_eff_score(eff_score, has_consensus)
 
-    def should_demote(self, current_ring: ExecutionRing, sigma_eff: float) -> bool:
+    def should_demote(self, current_ring: ExecutionRing, eff_score: float) -> bool:
         """Check if an agent should be demoted based on trust drop."""
-        appropriate = self.compute_ring(sigma_eff)
+        appropriate = self.compute_ring(eff_score)
         return appropriate.value > current_ring.value

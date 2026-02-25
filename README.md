@@ -59,11 +59,11 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 
 | OS Hypervisor | Agent Hypervisor |
 |---------------|-----------------|
-| CPU rings (Ring 0–3) | **Execution Rings** — privilege levels based on trust score (σ_eff) |
+| CPU rings (Ring 0–3) | **Execution Rings** — privilege levels based on trust score (eff_score) |
 | Process isolation | **Session isolation** — VFS namespacing, DID-bound identity |
-| Memory protection | **Liability protection** — bonded reputation, collateral slashing |
+| Memory protection | **Liability protection** — bonded reputation, collateral penalty |
 | System calls | **Saga transactions** — multi-step operations with automatic rollback |
-| Audit logs | **hash-chained delta audit** — tamper-evident forensic trail |
+| Audit logs | **audit-logged delta trail** — tamper-evident forensic trail |
 
 ## Architecture
 
@@ -76,16 +76,16 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 │  │   Manager    │ │   Enforcer   │ │   Orchestrator         │ │
 │  │             │ │              │ │  ┌──────────────────┐  │ │
 │  │  SSO + VFS  │ │  Ring 0–3    │ │  │ Timeout + Retry  │  │ │
-│  │  Lifecycle  │ │  σ_eff gates │ │  │ Compensation     │  │ │
+│  │  Lifecycle  │ │  eff_score gates │ │  │ Compensation     │  │ │
 │  └──────┬──────┘ └──────┬───────┘ │  │ Escalation       │  │ │
 │         │               │         │  └──────────────────┘  │ │
 │  ┌──────┴──────┐ ┌──────┴───────┐ └────────────┬───────────┘ │
 │  │  Liability  │ │ Reversibility│               │            │
 │  │  Engine     │ │  Registry    │ ┌─────────────┴──────────┐ │
 │  │             │ │              │ │   Delta Audit Engine    │ │
-│  │  Vouch +    │ │  Execute/    │ │                        │ │
-│  │  Bond +     │ │  Undo API    │ │  Hash Chain + GC     │ │
-│  │  Slash      │ │  Mapping     │ │  Hash Commit         │ │
+│  │  Sponsor +    │ │  Execute/    │ │                        │ │
+│  │  Bond +     │ │  Undo API    │ │  Audit Log + GC     │ │
+│  │  Penalize      │ │  Mapping     │ │  Hash Commit         │ │
 │  └─────────────┘ └──────────────┘ └────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -95,9 +95,9 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 ### 🔐 Execution Rings (Hardware-Inspired Privilege Model)
 
 ```
-Ring 0 (Root)       — Hypervisor config & slashing — requires SRE Witness
-Ring 1 (Privileged) — Non-reversible actions — requires σ_eff > 0.95 + consensus
-Ring 2 (Standard)   — Reversible actions — requires σ_eff > 0.60
+Ring 0 (Root)       — Hypervisor config & penalty — requires SRE Witness
+Ring 1 (Privileged) — Non-reversible actions — requires eff_score > 0.95 + consensus
+Ring 2 (Standard)   — Reversible actions — requires eff_score > 0.60
 Ring 3 (Sandbox)    — Read-only / research — default for unknown agents
 ```
 
@@ -107,7 +107,7 @@ Agents are automatically assigned to rings based on their effective trust score.
 
 ### 🤝 Joint Liability (Trust as Collateral)
 
-High-trust agents can **vouch** for low-trust agents by bonding a percentage of their reputation. If the vouchee violates intent, **both agents are penalized** — the voucher's collateral is slashed.
+High-trust agents can **sponsor** for low-trust agents by bonding a percentage of their reputation. If the sponsored agent violates intent, **both agents are penalized** — the sponsor's collateral is penalized.
 
 **v2.0:** Improved fault attribution, quarantine-before-terminate, persistent liability ledger for admission decisions.
 
@@ -117,14 +117,14 @@ Multi-step agent transactions with:
 - **Timeout enforcement** — steps that hang are automatically cancelled
 - **Retry with backoff** — transient failures retry with exponential delay
 - **Reverse-order compensation** — on failure, all committed steps are undone
-- **Escalation** — if compensation fails, Joint Liability slashing is triggered
+- **Escalation** — if compensation fails, Joint Liability penalty is triggered
 
-**v2.0:** Parallel fan-out (ALL/MAJORITY/ANY policies), semantic checkpoints for partial replay, declarative YAML/dict DSL.
+**v2.0:** Parallel execution (ALL/MAJORITY/ANY policies), execution checkpoints for partial replay, declarative YAML/dict DSL.
 
 ### 🔒 Session Consistency (NEW in v2.0)
 
-- **Vector clocks** — causal consistency for shared VFS state
-- **Intent locks** — READ/WRITE/EXCLUSIVE with deadlock detection
+- **Version counters** — causal consistency for shared VFS state
+- **Resource locks** — READ/WRITE/EXCLUSIVE with lock timeout
 - **Isolation levels** — SNAPSHOT, READ_COMMITTED, SERIALIZABLE per saga
 
 ### 🛡️ Security (NEW in v2.0)
@@ -141,7 +141,7 @@ Multi-step agent transactions with:
 
 Forensic-grade audit trails using:
 - **Semantic diffs** — captures what changed, not full snapshots
-- **hash chaining** — each delta references its parent hash (tamper-evident)
+- **audit loging** — each delta references its parent hash (tamper-evident)
 - **hash commitment** — Summary Hash computed at session end (blockchain anchoring planned)
 - **Garbage collection** — ephemeral data purged, forensic artifacts retained
 
@@ -155,7 +155,7 @@ Forensic-grade audit trails using:
 | 3-step saga | **151μs** | 5.3K ops/s |
 | **Full governance pipeline** | **268μs** | **2,983 ops/s** |
 
-> Full pipeline = session create + agent join + 3 audit deltas + saga step + terminate with hash chain root
+> Full pipeline = session create + agent join + 3 audit deltas + saga step + terminate with audit log root
 
 ## Installation
 
@@ -175,7 +175,7 @@ session = await hv.create_session(
     config=SessionConfig(
         consistency_mode=ConsistencyMode.EVENTUAL,
         max_participants=5,
-        min_sigma_eff=0.60,
+        min_eff_score=0.60,
     ),
     creator_did="did:mesh:admin",
 )
@@ -202,7 +202,7 @@ result = await session.saga.execute_step(
     saga.saga_id, step.step_id, executor=draft_email
 )
 
-# Terminate — returns hash chain root summary hash
+# Terminate — returns audit log root summary hash
 hash_chain_root = await hv.terminate_session(session.sso.session_id)
 ```
 
@@ -212,10 +212,10 @@ hash_chain_root = await hv.terminate_session(session.sso.session_id)
 |--------|-------------|-------|
 | `hypervisor.session` | Shared Session Object lifecycle + VFS | 52 |
 | `hypervisor.rings` | 4-ring privilege + elevation + breach detection | 34 |
-| `hypervisor.liability` | Vouching, slashing, attribution, quarantine, ledger | 39 |
+| `hypervisor.liability` | Sponsorship, penalty, attribution, quarantine, ledger | 39 |
 | `hypervisor.reversibility` | Execute/Undo API registry | 4 |
 | `hypervisor.saga` | Saga orchestrator + fan-out + checkpoints + DSL | 41 |
-| `hypervisor.audit` | Delta engine, hash chain, GC, commitment | 10 |
+| `hypervisor.audit` | Delta engine, audit log, GC, commitment | 10 |
 | `hypervisor.verification` | DID transaction history verification | 4 |
 | `hypervisor.observability` | Event bus, causal trace IDs | 22 |
 | `hypervisor.security` | Rate limiter, kill switch | 16 |
@@ -304,7 +304,7 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 Traditional access control is static and binary (allowed/denied). Execution Rings are dynamic and graduated -- agents earn ring privileges based on their trust score, can request temporary elevation with TTL (like `sudo`), and are automatically demoted when trust drops. Ring breach detection catches anomalous behavior before damage occurs.
 
 **What happens when a multi-agent saga fails?**
-The Saga Orchestrator triggers reverse-order compensation for all committed steps. For parallel fan-out sagas, the failure policy determines the response: ALL_MUST_SUCCEED compensates if any branch fails, MAJORITY allows minority failures, and ANY succeeds if at least one branch completes. Semantic checkpoints enable partial replay without re-running completed effects.
+The Saga Orchestrator triggers reverse-order compensation for all committed steps. For parallel execution sagas, the failure policy determines the response: ALL_MUST_SUCCEED compensates if any branch fails, MAJORITY allows minority failures, and ANY succeeds if at least one branch completes. Execution checkpoints enable partial replay without re-running completed effects.
 
 **How does fault attribution work?**
 When a saga fails, the hypervisor identifies the agent responsible for the failure and triggers appropriate liability consequences.

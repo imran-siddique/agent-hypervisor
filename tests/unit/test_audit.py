@@ -25,7 +25,7 @@ class TestDeltaEngine:
             self.engine.capture("did:a", changes)
 
         deltas = self.engine.deltas
-        # Community edition: no hash chaining, parent_hash is always None
+        # Community edition: no audit loging, parent_hash is always None
         assert deltas[0].parent_hash is None
         assert deltas[1].parent_hash is None
         assert deltas[2].parent_hash is None

@@ -29,10 +29,10 @@ The hypervisor is organized into 7 subsystems + integration adapters:
 |--------|---------|
 | `session/` | Shared Session Object (SSO) lifecycle |
 | `rings/` | 4-ring execution privilege model |
-| `liability/` | Vouching, bonding, collateral slashing |
+| `liability/` | Sponsorship, bonding, collateral penalty |
 | `reversibility/` | Execute/Undo API mapping |
 | `saga/` | Semantic saga with compensation |
-| `audit/` | hash-chained delta engine |
+| `audit/` | audit-logged delta engine |
 | `verification/` | DID transaction history |
 | `integrations/` | Nexus, Verification, IATP adapters |
 

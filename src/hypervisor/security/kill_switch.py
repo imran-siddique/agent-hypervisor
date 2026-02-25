@@ -2,7 +2,7 @@
 """
 Kill Switch — simple hard kill.
 
-Community edition: immediate agent termination, no saga handoff.
+Community edition: immediate agent termination, no task transfer.
 """
 
 from __future__ import annotations

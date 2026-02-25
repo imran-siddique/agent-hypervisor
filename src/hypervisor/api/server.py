@@ -90,7 +90,7 @@ def _participant_info(p: Any) -> ParticipantInfo:
         agent_did=p.agent_did,
         ring=p.ring.value,
         sigma_raw=p.sigma_raw,
-        sigma_eff=p.sigma_eff,
+        eff_score=p.eff_score,
         joined_at=p.joined_at.isoformat(),
         is_active=p.is_active,
     )
@@ -118,7 +118,7 @@ def create_app() -> FastAPI:
         description=(
             "REST API for the Agent Hypervisor — runtime supervisor for "
             "multi-agent Shared Sessions with Execution Rings, Joint Liability, "
-            "Saga Orchestration, and Hash chain audit trails."
+            "Saga Orchestration, and Audit log audit trails."
         ),
         version=__version__,
         lifespan=lifespan,
@@ -182,7 +182,7 @@ async def create_session(req: CreateSessionRequest) -> CreateSessionResponse:
         consistency_mode=req.consistency_mode,
         max_participants=req.max_participants,
         max_duration_seconds=req.max_duration_seconds,
-        min_sigma_eff=req.min_sigma_eff,
+        min_eff_score=req.min_eff_score,
         enable_audit=req.enable_audit,
         enable_blockchain_commitment=req.enable_blockchain_commitment,
     )
@@ -349,7 +349,7 @@ async def check_ring_access(req: RingCheckRequest) -> RingCheckResponse:
     result = hv.ring_enforcer.check(
         agent_ring=agent_ring,
         action=action,
-        sigma_eff=req.sigma_eff,
+        eff_score=req.eff_score,
         has_consensus=req.has_consensus,
         has_sre_witness=req.has_sre_witness,
     )
@@ -357,7 +357,7 @@ async def check_ring_access(req: RingCheckRequest) -> RingCheckResponse:
         allowed=result.allowed,
         required_ring=result.required_ring.value,
         agent_ring=result.agent_ring.value,
-        sigma_eff=result.sigma_eff,
+        eff_score=result.eff_score,
         reason=result.reason,
         requires_consensus=result.requires_consensus,
         requires_sre_witness=result.requires_sre_witness,
@@ -513,13 +513,13 @@ async def execute_saga_step(saga_id: str, step_id: str) -> ExecuteStepResponse:
 # ── Liability ───────────────────────────────────────────────────────────────
 
 @app.post(
-    "/api/v1/sessions/{session_id}/vouch",
+    "/api/v1/sessions/{session_id}/sponsor",
     response_model=VouchResponse,
     status_code=201,
     tags=["Liability"],
 )
 async def create_vouch(session_id: str, req: CreateVouchRequest) -> VouchResponse:
-    """Create a vouching bond between agents in a session."""
+    """Create a sponsorship bond between agents in a session."""
     hv = _hv()
     _get_managed(session_id)  # verify session exists
     try:
@@ -544,12 +544,12 @@ async def create_vouch(session_id: str, req: CreateVouchRequest) -> VouchRespons
 
 
 @app.get(
-    "/api/v1/sessions/{session_id}/vouches",
+    "/api/v1/sessions/{session_id}/sponsors",
     response_model=list[VouchResponse],
     tags=["Liability"],
 )
 async def list_vouches(session_id: str) -> list[VouchResponse]:
-    """List all vouches in a session."""
+    """List all sponsors in a session."""
     _get_managed(session_id)
     hv = _hv()
     return [
@@ -688,7 +688,7 @@ async def get_commitment(session_id: str):
 
 @app.post("/api/v1/audit/verify/{session_id}", response_model=VerifyCommitmentResponse, tags=["Audit"])
 async def verify_commitment(session_id: str, expected_root: str = Query(...)):
-    """Verify a session's hash chain root matches its commitment."""
+    """Verify a session's audit log root matches its commitment."""
     engine = _hv().commitment_engine
     record = engine.get_commitment(session_id)
     if not record:

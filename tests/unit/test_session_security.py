@@ -1,4 +1,4 @@
-"""Tests for vector clocks, intent locks, isolation levels, rate limiter, and kill switch."""
+"""Tests for version counters, resource locks, isolation levels, rate limiter, and kill switch."""
 
 import pytest
 from datetime import timedelta, datetime, timezone
@@ -28,7 +28,7 @@ from hypervisor.security.kill_switch import (
 )
 
 
-# ── Vector Clock Tests ──────────────────────────────────────────
+# ── Version Counter Tests ──────────────────────────────────────────
 
 
 class TestVectorClock:
@@ -103,7 +103,7 @@ class TestVectorClockManager:
         assert mgr.conflict_count == 0
 
 
-# ── Intent Lock Tests ───────────────────────────────────────────
+# ── Resource Lock Tests ───────────────────────────────────────────
 
 
 class TestIntentLocks:

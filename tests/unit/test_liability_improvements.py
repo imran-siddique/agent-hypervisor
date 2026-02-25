@@ -20,7 +20,7 @@ from hypervisor.liability.ledger import (
 )
 
 
-# ── Causal Attribution Tests ────────────────────────────────────
+# ── Fault Logging Tests ────────────────────────────────────
 
 
 class TestCausalAttribution:

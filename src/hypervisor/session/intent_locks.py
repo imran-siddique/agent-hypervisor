@@ -1,6 +1,6 @@
 # Community Edition — basic implementation
 """
-Intent Locks — stub implementation.
+Resource Locks — stub implementation.
 
 Community edition: locks are not enforced. All acquire calls succeed.
 """
@@ -24,7 +24,7 @@ class LockIntent(str, Enum):
 
 @dataclass
 class IntentLock:
-    """A declared intent lock on a resource."""
+    """A declared resource lock on a resource."""
 
     lock_id: str = field(default_factory=lambda: f"lock:{uuid.uuid4().hex[:8]}")
     agent_did: str = ""
@@ -46,7 +46,7 @@ class DeadlockError(Exception):
 
 class IntentLockManager:
     """
-    Intent lock stub (community edition: all locks succeed, no contention).
+    Resource lock stub (community edition: all locks succeed, no contention).
     """
 
     def __init__(self) -> None:

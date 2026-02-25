@@ -74,13 +74,13 @@ class TestFullLifecycle:
             [VFSChange(path="/data/report.md", operation="modify", content_hash="def456")],
         )
 
-        # Terminate — should get hash chain root
+        # Terminate — should get audit log root
         hash_chain_root = await self.hv.terminate_session(sid)
         assert hash_chain_root is not None
         assert len(hash_chain_root) == 64  # SHA-256 hex
 
     async def test_session_without_audit(self):
-        """Session with audit disabled returns None hash chain root."""
+        """Session with audit disabled returns None audit log root."""
         session = await self.hv.create_session(
             config=SessionConfig(enable_audit=False),
             creator_did="did:mesh:admin",
@@ -113,7 +113,7 @@ class TestFullLifecycle:
 
 
 class TestRingEnforcementIntegration:
-    """Test ring assignment with real sessions and vouching."""
+    """Test ring assignment with real sessions and sponsorship."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -163,28 +163,28 @@ class TestRingEnforcementIntegration:
 
 
 # ---------------------------------------------------------------------------
-# Vouching + Slashing Integration
+# Sponsorship + Penalty Integration
 # ---------------------------------------------------------------------------
 
 
 class TestVouchingSlashingIntegration:
-    """Test vouching with exposure limits and slashing cascades."""
+    """Test sponsorship with exposure limits and penalty cascades."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         self.hv = Hypervisor()
         self.session_id = "test-session"
 
-    def test_vouch_and_compute_sigma_eff(self):
+    def test_vouch_and_compute_eff_score(self):
         self.hv.vouching.vouch(
             "did:mesh:high", "did:mesh:low", self.session_id, 0.9, bond_pct=0.3
         )
-        sigma_eff = self.hv.vouching.compute_sigma_eff(
+        eff_score = self.hv.vouching.compute_eff_score(
             "did:mesh:low", self.session_id, 0.4, risk_weight=0.5
         )
-        # Community edition: no voucher boost, sigma_eff = vouchee_sigma
-        assert sigma_eff == 0.4
-        assert sigma_eff <= 1.0
+        # Community edition: no sponsor boost, eff_score = vouchee_sigma
+        assert eff_score == 0.4
+        assert eff_score <= 1.0
 
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_max_exposure_prevents_over_bonding(self):
@@ -200,7 +200,7 @@ class TestVouchingSlashingIntegration:
             )
 
     def test_slash_cascades_to_voucher(self):
-        """Community edition: slashing logs but doesn't apply penalties."""
+        """Community edition: penalty logs but doesn't apply penalties."""
         self.hv.vouching.vouch(
             "did:mesh:high", "did:mesh:low", self.session_id, 0.9, bond_pct=0.3
         )
@@ -353,7 +353,7 @@ class TestSagaIntegration:
         assert saga.state == SagaState.COMPLETED
 
     async def test_saga_escalation_on_compensation_failure(self):
-        """Failed compensation escalates to Joint Liability slashing."""
+        """Failed compensation escalates to Joint Liability penalty."""
         session = await self.hv.create_session(
             config=SessionConfig(), creator_did="did:mesh:admin"
         )
@@ -373,7 +373,7 @@ class TestSagaIntegration:
         failed = await session.saga.compensate(saga.saga_id, compensator)
         assert len(failed) == 1
         assert saga.state == SagaState.ESCALATED
-        assert "slashing triggered" in saga.error
+        assert "penalty triggered" in saga.error
 
 
 # ---------------------------------------------------------------------------
@@ -425,7 +425,7 @@ class TestAuditTrailIntegration:
         assert session.delta_engine.verify_chain() is True
 
     async def test_hash_chain_root_deterministic(self):
-        """Same session with same deltas produces consistent hash chain roots."""
+        """Same session with same deltas produces consistent audit log roots."""
         session = await self.hv.create_session(
             config=SessionConfig(), creator_did="did:mesh:admin"
         )
@@ -532,9 +532,9 @@ class TestEdgeCases:
     @pytest.mark.skip("Feature not available in Community Edition")
     async def test_vouching_exposure_limit_across_sessions(self):
         """Max exposure protects an agent's total bonded reputation."""
-        # Vouch agent has σ=0.9, max_exposure=0.80 → limit 0.72
+        # Sponsor agent has σ=0.9, max_exposure=0.80 → limit 0.72
         self.hv.vouching.vouch("did:mesh:v", "did:mesh:a", "s1", 0.9, bond_pct=0.4)
-        # Bonded 0.36 in s1. Next vouch: 0.4*0.9 = 0.36 → total 0.72 = exactly at limit
+        # Bonded 0.36 in s1. Next sponsor: 0.4*0.9 = 0.36 → total 0.72 = exactly at limit
         self.hv.vouching.vouch("did:mesh:v", "did:mesh:b", "s1", 0.9, bond_pct=0.4)
         # Any more should fail
         with pytest.raises(VouchingError, match="exceed max exposure"):

@@ -5,11 +5,11 @@ Multi-module end-to-end scenarios that exercise the Hypervisor
 integration adapters (Nexus, Verification, IATP) together.
 
 Scenarios:
-1. Rogue agent detected by Verification → slashed by Hypervisor → reputation loss via Nexus
+1. Rogue agent detected by Verification → penalized by Hypervisor → reputation loss via Nexus
 2. New agent joins → IATP manifest parsed → ring assigned by Nexus score
 3. Behavioral drift triggers demotion cascade
 4. Trust decay over repeated low-drift violations
-5. Full cross-module governance: join → verify → drift → slash → terminate
+5. Full cross-module governance: join → verify → drift → penalize → terminate
 """
 
 from __future__ import annotations
@@ -154,7 +154,7 @@ class AgentHistory:
 
 
 # ---------------------------------------------------------------------------
-# Scenario 1: Rogue Agent Detection → Slashing → Nexus Reputation Loss
+# Scenario 1: Rogue Agent Detection → Penalty → Nexus Reputation Loss
 # ---------------------------------------------------------------------------
 
 
@@ -177,7 +177,7 @@ class TestRogueAgentScenario:
 
     @pytest.mark.skip("Feature not available in Community Edition")
     async def test_rogue_detected_slashed_reputation_reduced(self):
-        """Full rogue agent lifecycle: join → drift → slash → nexus penalty."""
+        """Full rogue agent lifecycle: join → drift → penalize → nexus penalty."""
         # 1) Resolve sigma from Nexus
         sigma_rogue = self.nexus.resolve_sigma(
             "did:mesh:rogue-agent",
@@ -207,7 +207,7 @@ class TestRogueAgentScenario:
         assert drift_result.severity == DriftSeverity.HIGH
         assert drift_result.should_slash is True
 
-        # 4) Slash via hypervisor
+        # 4) Penalize via hypervisor
         agent_scores = {"did:mesh:rogue-agent": sigma_rogue}
         slash_result = self.hv.slashing.slash(
             vouchee_did="did:mesh:rogue-agent",
@@ -240,7 +240,7 @@ class TestRogueAgentScenario:
         assert cached.tier == "untrusted"  # 250 < 300 threshold
 
     async def test_clean_agent_passes_verification_check(self):
-        """An honest agent produces no drift — no slashing needed."""
+        """An honest agent produces no drift — no penalty needed."""
         sigma_good = self.nexus.resolve_sigma(
             "did:mesh:good-agent",
             history=AgentHistory("did:mesh:good-agent"),
@@ -407,7 +407,7 @@ class TestIATPManifestOnboarding:
 
 class TestDriftDemotionCascade:
     """
-    Flow: Repeated MEDIUM drift → accumulate history → escalate → slash
+    Flow: Repeated MEDIUM drift → accumulate history → escalate → penalize
     """
 
     @pytest.fixture(autouse=True)
@@ -451,7 +451,7 @@ class TestDriftDemotionCascade:
 
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_critical_drift_immediate_slash(self):
-        """CRITICAL drift immediately signals for slashing."""
+        """CRITICAL drift immediately signals for penalty."""
         self.verification_backend.set_drift("did:mesh:bad", 0.80)
         result = self.policy_check.check_behavioral_drift(
             agent_did="did:mesh:bad",
@@ -461,31 +461,31 @@ class TestDriftDemotionCascade:
         )
         assert result.severity == DriftSeverity.CRITICAL
         assert result.should_slash is True
-        assert result.should_demote is False  # slash > demote
+        assert result.should_demote is False  # penalize > demote
 
 
 # ---------------------------------------------------------------------------
-# Scenario 4: Voucher Cascade with Nexus Reporting
+# Scenario 4: Sponsor Cascade with Nexus Reporting
 # ---------------------------------------------------------------------------
 
 
 class TestVoucherCascadeWithNexus:
     """
-    Flow: Agent A vouches for B → B drifts → both slashed → both reported to Nexus
+    Flow: Agent A sponsors for B → B drifts → both penalized → both reported to Nexus
     """
 
     @pytest.fixture(autouse=True)
     def setup(self):
         self.hv = Hypervisor()
         self.nexus_engine = MockReputationEngine({
-            "did:mesh:voucher-A": 800,
+            "did:mesh:sponsor-A": 800,
             "did:mesh:rogue-B": 700,
         })
         self.nexus = NexusAdapter(scorer=self.nexus_engine)
 
     @pytest.mark.skip("Feature not available in Community Edition")
     async def test_voucher_cascade_with_nexus_penalty(self):
-        """Vouch → slash → voucher clipped → both reported to Nexus."""
+        """Sponsor → penalize → sponsor clipped → both reported to Nexus."""
         # Create session
         session = await self.hv.create_session(
             config=SessionConfig(max_participants=5),
@@ -494,22 +494,22 @@ class TestVoucherCascadeWithNexus:
         sid = session.sso.session_id
 
         # Join agents
-        await self.hv.join_session(sid, "did:mesh:voucher-A", sigma_raw=0.80)
+        await self.hv.join_session(sid, "did:mesh:sponsor-A", sigma_raw=0.80)
         await self.hv.join_session(sid, "did:mesh:rogue-B", sigma_raw=0.70)
         await self.hv.activate_session(sid)
 
-        # A vouches for B
+        # A sponsors for B
         self.hv.vouching.vouch(
-            voucher_did="did:mesh:voucher-A",
+            voucher_did="did:mesh:sponsor-A",
             vouchee_did="did:mesh:rogue-B",
             voucher_sigma=0.80,
             bond_pct=0.50,
             session_id=sid,
         )
 
-        # Slash B
+        # Penalize B
         agent_scores = {
-            "did:mesh:voucher-A": 0.80,
+            "did:mesh:sponsor-A": 0.80,
             "did:mesh:rogue-B": 0.70,
         }
         result = self.hv.slashing.slash(
@@ -524,7 +524,7 @@ class TestVoucherCascadeWithNexus:
         # B is blacklisted
         assert agent_scores["did:mesh:rogue-B"] == 0.0
         # A is clipped: 0.80 × (1 - 0.80) = 0.16
-        assert agent_scores["did:mesh:voucher-A"] == pytest.approx(0.16, abs=0.01)
+        assert agent_scores["did:mesh:sponsor-A"] == pytest.approx(0.16, abs=0.01)
 
         # Report both to Nexus
         self.nexus.report_slash(
@@ -533,15 +533,15 @@ class TestVoucherCascadeWithNexus:
             severity="high",
         )
         self.nexus.report_slash(
-            "did:mesh:voucher-A",
+            "did:mesh:sponsor-A",
             reason="Collateral: vouched for rogue agent",
             severity="low",
         )
 
         assert self.nexus_engine._scores["did:mesh:rogue-B"] == 200  # 700 - 500
-        assert self.nexus_engine._scores["did:mesh:voucher-A"] == 750  # 800 - 50
+        assert self.nexus_engine._scores["did:mesh:sponsor-A"] == 750  # 800 - 50
 
-        # Verify slash count in Nexus
+        # Verify penalty count in Nexus
         assert len(self.nexus_engine._slashes) == 2
 
 
@@ -554,7 +554,7 @@ class TestFullGovernancePipeline:
     """
     The complete governance flow across all modules:
     IATP manifest → Nexus trust → Ring assignment → Verification monitoring →
-    Drift detected → Slashing → Nexus reputation loss → Session cleanup
+    Drift detected → Penalty → Nexus reputation loss → Session cleanup
     """
 
     @pytest.fixture(autouse=True)
@@ -570,7 +570,7 @@ class TestFullGovernancePipeline:
 
     @pytest.mark.skip("Feature not available in Community Edition")
     async def test_full_pipeline_join_to_slash_to_terminate(self):
-        """Complete cross-module pipeline: manifest → join → drift → slash → terminate."""
+        """Complete cross-module pipeline: manifest → join → drift → penalize → terminate."""
         agent_did = "did:mesh:agent-alpha"
 
         # === Phase 1: IATP Manifest Parsing ===
@@ -653,7 +653,7 @@ class TestFullGovernancePipeline:
         assert check2.severity == DriftSeverity.HIGH
         assert check2.should_slash is True
 
-        # === Phase 5: Slashing ===
+        # === Phase 5: Penalty ===
         agent_scores = {agent_did: sigma}
         slash_result = self.hv.slashing.slash(
             vouchee_did=agent_did,
@@ -677,12 +677,12 @@ class TestFullGovernancePipeline:
         assert self.nexus_engine._scores[agent_did] == 320
 
         # === Phase 7: Terminate Session ===
-        # Capture audit delta so hash chain root is produced
+        # Capture audit delta so audit log root is produced
         from hypervisor.audit.delta import VFSChange
         session.delta_engine.capture(agent_did, [VFSChange(
-            path="/sessions/test/slash-event",
+            path="/sessions/test/penalize-event",
             operation="add",
-            content_hash="sha256:slash-evidence",
+            content_hash="sha256:penalize-evidence",
             agent_did=agent_did,
         )])
         hash_chain_root = await self.hv.terminate_session(sid)
@@ -695,7 +695,7 @@ class TestFullGovernancePipeline:
         assert len(self.nexus_engine._slashes) == 1
 
     async def test_clean_agent_full_pipeline(self):
-        """Pipeline for a well-behaved agent: no slashing, clean termination."""
+        """Pipeline for a well-behaved agent: no penalty, clean termination."""
         agent_did = "did:mesh:agent-alpha"
 
         sigma = self.nexus.resolve_sigma(
@@ -727,7 +727,7 @@ class TestFullGovernancePipeline:
         self.nexus.report_task_outcome(agent_did, "success")
         assert len(self.nexus_engine._outcomes) == 1
 
-        # Capture at least one delta so audit produces a hash chain root
+        # Capture at least one delta so audit produces a audit log root
         from hypervisor.audit.delta import VFSChange
         session.delta_engine.capture(agent_did, [VFSChange(
             path="/sessions/test/status",
@@ -885,7 +885,7 @@ class TestWiredHypervisor:
     """
     Tests for Hypervisor with adapters wired directly into __init__,
     exercising auto-resolution of sigma, IATP manifest parsing, and
-    automatic Verification slashing via verify_behavior().
+    automatic Verification penalty via verify_behavior().
     """
 
     @pytest.fixture(autouse=True)
@@ -998,13 +998,13 @@ class TestWiredHypervisor:
 
         assert result is not None
         assert result.should_slash is True
-        # Auto-slashing should have fired
+        # Auto-penalty should have fired
         assert len(self.hv.slashing.history) == 1
         # Nexus should have been notified
         assert len(self.nexus_engine._slashes) == 1
 
     async def test_verify_behavior_no_slash_on_clean(self):
-        """verify_behavior() does NOT slash on clean output."""
+        """verify_behavior() does NOT penalize on clean output."""
         session = await self.hv.create_session(
             config=SessionConfig(max_participants=5),
             creator_did="did:mesh:admin",

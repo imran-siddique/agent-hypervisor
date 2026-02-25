@@ -1,6 +1,6 @@
 # Community Edition — basic implementation
 """
-Vector Clocks — stub implementation.
+Version Counters — stub implementation.
 
 Community edition: no causal consistency enforcement.
 VectorClock and VectorClockManager are retained for API compatibility.
@@ -19,7 +19,7 @@ class CausalViolationError(Exception):
 
 @dataclass
 class VectorClock:
-    """A vector clock (community edition: tracking only, no enforcement)."""
+    """A version counter (community edition: tracking only, no enforcement)."""
 
     clocks: dict[str, int] = field(default_factory=dict)
 
@@ -31,7 +31,7 @@ class VectorClock:
         return self.clocks.get(agent_did, 0)
 
     def merge(self, other: VectorClock) -> VectorClock:
-        """Merge two vector clocks (take component-wise max)."""
+        """Merge two version counters (take component-wise max)."""
         merged = VectorClock(clocks=dict(self.clocks))
         for agent, clock in other.clocks.items():
             merged.clocks[agent] = max(merged.clocks.get(agent, 0), clock)
@@ -58,7 +58,7 @@ class VectorClock:
 
 class VectorClockManager:
     """
-    Vector clock stub (community edition: no causal enforcement).
+    Version counter stub (community edition: no causal enforcement).
     Reads and writes always succeed.
     """
 

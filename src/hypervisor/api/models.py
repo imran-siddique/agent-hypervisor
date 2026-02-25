@@ -19,7 +19,7 @@ class CreateSessionRequest(BaseModel):
     consistency_mode: ConsistencyMode = ConsistencyMode.EVENTUAL
     max_participants: int = 10
     max_duration_seconds: int = 3600
-    min_sigma_eff: float = 0.60
+    min_eff_score: float = 0.60
     enable_audit: bool = True
     enable_blockchain_commitment: bool = False
 
@@ -30,7 +30,7 @@ class ParticipantInfo(BaseModel):
     agent_did: str
     ring: int
     sigma_raw: float
-    sigma_eff: float
+    eff_score: float
     joined_at: str
     is_active: bool
 
@@ -108,7 +108,7 @@ class RingCheckRequest(BaseModel):
 
     agent_ring: int = Field(..., description="Agent's current ring level (0-3)")
     action: dict[str, Any] = Field(..., description="ActionDescriptor fields")
-    sigma_eff: float = Field(..., description="Agent's effective reputation score")
+    eff_score: float = Field(..., description="Agent's effective reputation score")
     has_consensus: bool = False
     has_sre_witness: bool = False
 
@@ -119,7 +119,7 @@ class RingCheckResponse(BaseModel):
     allowed: bool
     required_ring: int
     agent_ring: int
-    sigma_eff: float
+    eff_score: float
     reason: str
     requires_consensus: bool = False
     requires_sre_witness: bool = False
@@ -180,17 +180,17 @@ class ExecuteStepResponse(BaseModel):
 # ── Liability models ────────────────────────────────────────────────────────
 
 class CreateVouchRequest(BaseModel):
-    """Request body for creating a vouch."""
+    """Request body for creating a sponsor."""
 
-    voucher_did: str = Field(..., description="DID of the vouching agent")
+    voucher_did: str = Field(..., description="DID of the sponsorship agent")
     vouchee_did: str = Field(..., description="DID of the agent being vouched for")
-    voucher_sigma: float = Field(..., description="Voucher's raw reputation score")
+    voucher_sigma: float = Field(..., description="Sponsor's raw reputation score")
     bond_pct: Optional[float] = None
     expiry: Optional[str] = None
 
 
 class VouchResponse(BaseModel):
-    """Response after creating a vouch."""
+    """Response after creating a sponsor."""
 
     vouch_id: str
     voucher_did: str

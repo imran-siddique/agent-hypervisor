@@ -1,9 +1,9 @@
 # Community Edition — basic implementation
 """
-Liability Matrix — simple event log for voucher→vouchee relationships.
+Liability Matrix — simple event log for sponsor→sponsored agent relationships.
 
 Community edition: graph operations are retained for API compatibility
-but vouching/slashing/quarantine are stubs.
+but sponsorship/penalty/quarantine are stubs.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ class LiabilityEdge:
 
 class LiabilityMatrix:
     """
-    Directed graph tracking voucher→vouchee bonds within a session.
+    Directed graph tracking sponsor→sponsored agent bonds within a session.
 
     Provides query APIs for exposure analysis and cascade detection.
     """
@@ -40,7 +40,7 @@ class LiabilityMatrix:
         bonded_amount: float,
         vouch_id: str,
     ) -> LiabilityEdge:
-        """Record a vouching relationship."""
+        """Record a sponsorship relationship."""
         edge = LiabilityEdge(
             voucher_did=voucher_did,
             vouchee_did=vouchee_did,
@@ -51,26 +51,26 @@ class LiabilityMatrix:
         return edge
 
     def remove_edge(self, vouch_id: str) -> None:
-        """Remove a vouching relationship by vouch ID."""
+        """Remove a sponsorship relationship by sponsor ID."""
         self._edges = [e for e in self._edges if e.vouch_id != vouch_id]
 
     def who_vouches_for(self, agent_did: str) -> list[LiabilityEdge]:
-        """Get all vouchers for a given agent."""
+        """Get all sponsors for a given agent."""
         return [e for e in self._edges if e.vouchee_did == agent_did]
 
     def who_is_vouched_by(self, agent_did: str) -> list[LiabilityEdge]:
-        """Get all vouchees of a given voucher."""
+        """Get all sponsored agents of a given sponsor."""
         return [e for e in self._edges if e.voucher_did == agent_did]
 
     def total_exposure(self, voucher_did: str) -> float:
-        """Total σ bonded by a voucher across all vouchees."""
+        """Total σ bonded by a sponsor across all sponsored agents."""
         return sum(e.bonded_amount for e in self._edges if e.voucher_did == voucher_did)
 
     def cascade_path(self, agent_did: str, max_depth: int = 2) -> list[list[str]]:
         """
         Find cascade paths from an agent through the liability graph.
 
-        Returns all paths where slashing agent_did would cascade to others.
+        Returns all paths where penalty agent_did would cascade to others.
         """
         paths: list[list[str]] = []
         self._dfs_cascade(agent_did, [agent_did], paths, max_depth)

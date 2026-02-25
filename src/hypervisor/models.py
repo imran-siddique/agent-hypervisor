@@ -20,9 +20,9 @@ class ExecutionRing(int, Enum):
     """
     Hardware-inspired execution privilege rings.
 
-    Ring 0 (Root): Hypervisor config & slashing — requires SRE Witness.
-    Ring 1 (Privileged): Non-reversible actions — requires σ_eff > 0.95 + consensus.
-    Ring 2 (Standard): Reversible actions — requires σ_eff > 0.60.
+    Ring 0 (Root): Hypervisor config & penalty — requires SRE Witness.
+    Ring 1 (Privileged): Non-reversible actions — requires eff_score > 0.95 + consensus.
+    Ring 2 (Standard): Reversible actions — requires eff_score > 0.60.
     Ring 3 (Sandbox): Read-only / research — default for unknown agents.
     """
 
@@ -32,11 +32,11 @@ class ExecutionRing(int, Enum):
     RING_3_SANDBOX = 3
 
     @classmethod
-    def from_sigma_eff(cls, sigma_eff: float, has_consensus: bool = False) -> ExecutionRing:
+    def from_eff_score(cls, eff_score: float, has_consensus: bool = False) -> ExecutionRing:
         """Derive ring level from effective reputation score."""
-        if sigma_eff > 0.95 and has_consensus:
+        if eff_score > 0.95 and has_consensus:
             return cls.RING_1_PRIVILEGED
-        elif sigma_eff > 0.60:
+        elif eff_score > 0.60:
             return cls.RING_2_STANDARD
         else:
             return cls.RING_3_SANDBOX
@@ -83,7 +83,7 @@ class SessionConfig:
     consistency_mode: ConsistencyMode = ConsistencyMode.EVENTUAL
     max_participants: int = 10
     max_duration_seconds: int = 3600
-    min_sigma_eff: float = 0.60
+    min_eff_score: float = 0.60
     enable_audit: bool = True
     enable_blockchain_commitment: bool = False
 
@@ -95,7 +95,7 @@ class SessionParticipant:
     agent_did: str
     ring: ExecutionRing = ExecutionRing.RING_3_SANDBOX
     sigma_raw: float = 0.0
-    sigma_eff: float = 0.0
+    eff_score: float = 0.0
     joined_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
 

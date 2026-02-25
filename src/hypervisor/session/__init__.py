@@ -25,7 +25,7 @@ class SharedSessionObject:
     - SessionID: UUID bound to a DID
     - ConsistencyMode: Strong (consensus) or Eventual (gossip)
     - StateSubstrate: A VFS representing the shared world
-    - LiabilityMatrix: Registry of who vouches for whom
+    - LiabilityMatrix: Registry of who sponsors for whom
 
     Lifecycle: created → handshaking → active → terminating → archived
     """
@@ -86,7 +86,7 @@ class SharedSessionObject:
         self,
         agent_did: str,
         sigma_raw: float = 0.0,
-        sigma_eff: float = 0.0,
+        eff_score: float = 0.0,
         ring: ExecutionRing = ExecutionRing.RING_3_SANDBOX,
     ) -> SessionParticipant:
         """Add an agent to this session."""
@@ -98,16 +98,16 @@ class SharedSessionObject:
             raise SessionParticipantError(
                 f"Session at capacity ({self.config.max_participants})"
             )
-        if sigma_eff < self.config.min_sigma_eff and ring != ExecutionRing.RING_3_SANDBOX:
+        if eff_score < self.config.min_eff_score and ring != ExecutionRing.RING_3_SANDBOX:
             raise SessionParticipantError(
-                f"σ_eff {sigma_eff:.2f} below minimum {self.config.min_sigma_eff:.2f}"
+                f"eff_score {eff_score:.2f} below minimum {self.config.min_eff_score:.2f}"
             )
 
         participant = SessionParticipant(
             agent_did=agent_did,
             ring=ring,
             sigma_raw=sigma_raw,
-            sigma_eff=sigma_eff,
+            eff_score=eff_score,
         )
         self._participants[agent_did] = participant
         return participant
@@ -147,7 +147,7 @@ class SharedSessionObject:
     def create_vfs_snapshot(self, snapshot_id: Optional[str] = None) -> str:
         """Create a VFS state snapshot for rollback.
 
-        Captures both VFS file state (copy-on-write) and participant metadata.
+        Captures both VFS file state (snapshot) and participant metadata.
         """
         self._assert_state(SessionState.ACTIVE)
         # Snapshot the VFS file state
@@ -156,7 +156,7 @@ class SharedSessionObject:
         self._vfs_snapshots[sid] = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "participant_states": {
-                did: {"ring": p.ring.value, "sigma_eff": p.sigma_eff}
+                did: {"ring": p.ring.value, "eff_score": p.eff_score}
                 for did, p in self._participants.items()
             },
         }

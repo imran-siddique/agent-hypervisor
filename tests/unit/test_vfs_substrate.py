@@ -197,12 +197,12 @@ class TestVFSAttribution:
 
 
 # ---------------------------------------------------------------------------
-# SessionVFS — Snapshot / Restore (copy-on-write)
+# SessionVFS — Snapshot / Restore (snapshot)
 # ---------------------------------------------------------------------------
 
 
 class TestVFSSnapshots:
-    """Snapshot create and restore with copy-on-write semantics."""
+    """Snapshot create and restore with snapshot semantics."""
 
     def setup_method(self):
         self.vfs = SessionVFS("session:snap-test")
@@ -402,10 +402,10 @@ class TestSSOVFSIntegration:
     """SharedSessionObject provides an integrated VFS per session."""
 
     def setup_method(self):
-        self.config = SessionConfig(max_participants=5, min_sigma_eff=0.5)
+        self.config = SessionConfig(max_participants=5, min_eff_score=0.5)
         self.sso = SharedSessionObject(config=self.config, creator_did="did:admin")
         self.sso.begin_handshake()
-        self.sso.join("did:agent-a", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        self.sso.join("did:agent-a", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         self.sso.activate()
 
     def test_sso_has_vfs(self):
@@ -422,7 +422,7 @@ class TestSSOVFSIntegration:
     def test_two_sessions_have_isolated_vfs(self):
         sso2 = SharedSessionObject(config=self.config, creator_did="did:admin2")
         sso2.begin_handshake()
-        sso2.join("did:agent-b", sigma_eff=0.7, ring=ExecutionRing.RING_2_STANDARD)
+        sso2.join("did:agent-b", eff_score=0.7, ring=ExecutionRing.RING_2_STANDARD)
         sso2.activate()
         self.sso.vfs.write("shared.txt", "session1-data", "did:agent-a")
         assert sso2.vfs.read("shared.txt") is None

@@ -1,4 +1,4 @@
-"""Tests for the slashing engine."""
+"""Tests for the penalty engine."""
 
 import pytest
 from hypervisor.liability.vouching import VouchingEngine
@@ -9,11 +9,11 @@ class TestSlashingEngine:
     def setup_method(self):
         self.vouching = VouchingEngine()
         self.slashing = SlashingEngine(self.vouching)
-        self.session = "session:test-slash"
+        self.session = "session:test-penalize"
 
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_vouchee_blacklisted(self):
-        """Vouchee σ → 0 on violation."""
+        """Sponsored agent σ → 0 on violation."""
         scores = {"did:mesh:bad": 0.7, "did:mesh:good": 0.9}
         self.vouching.vouch("did:mesh:good", "did:mesh:bad", self.session, 0.9)
 
@@ -32,8 +32,8 @@ class TestSlashingEngine:
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_voucher_collateral_clip(self):
         """σ_new = σ_old × (1 - ω)"""
-        scores = {"did:mesh:bad": 0.5, "did:mesh:voucher": 0.9}
-        self.vouching.vouch("did:mesh:voucher", "did:mesh:bad", self.session, 0.9)
+        scores = {"did:mesh:bad": 0.5, "did:mesh:sponsor": 0.9}
+        self.vouching.vouch("did:mesh:sponsor", "did:mesh:bad", self.session, 0.9)
 
         result = self.slashing.slash(
             vouchee_did="did:mesh:bad",
@@ -49,12 +49,12 @@ class TestSlashingEngine:
         clip = result.voucher_clips[0]
         assert abs(clip.sigma_before - 0.9) < 1e-9
         assert abs(clip.sigma_after - 0.45) < 1e-9
-        assert abs(scores["did:mesh:voucher"] - 0.45) < 1e-9
+        assert abs(scores["did:mesh:sponsor"] - 0.45) < 1e-9
 
     def test_sigma_floor_respected(self):
-        """Slashing should not reduce below SIGMA_FLOOR."""
-        scores = {"did:mesh:bad": 0.1, "did:mesh:voucher": 0.06}
-        self.vouching.vouch("did:mesh:voucher", "did:mesh:bad", self.session, 0.8)
+        """Penalty should not reduce below SIGMA_FLOOR."""
+        scores = {"did:mesh:bad": 0.1, "did:mesh:sponsor": 0.06}
+        self.vouching.vouch("did:mesh:sponsor", "did:mesh:bad", self.session, 0.8)
 
         self.slashing.slash(
             vouchee_did="did:mesh:bad",
@@ -65,11 +65,11 @@ class TestSlashingEngine:
             agent_scores=scores,
         )
 
-        assert scores["did:mesh:voucher"] >= SlashingEngine.SIGMA_FLOOR
+        assert scores["did:mesh:sponsor"] >= SlashingEngine.SIGMA_FLOOR
 
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_multiple_vouchers_all_clipped(self):
-        """All vouchers for a vouchee get clipped."""
+        """All sponsors for a sponsored agent get clipped."""
         scores = {"did:mesh:bad": 0.4, "did:mesh:v1": 0.8, "did:mesh:v2": 0.7}
         self.vouching.vouch("did:mesh:v1", "did:mesh:bad", self.session, 0.8)
         self.vouching.vouch("did:mesh:v2", "did:mesh:bad", self.session, 0.7)

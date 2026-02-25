@@ -1,4 +1,4 @@
-"""Tests for saga fan-out, semantic checkpoints, and declarative DSL."""
+"""Tests for saga fan-out, execution checkpoints, and declarative DSL."""
 
 import pytest
 import asyncio

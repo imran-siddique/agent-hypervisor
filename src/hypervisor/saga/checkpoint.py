@@ -1,6 +1,6 @@
 # Community Edition — basic implementation
 """
-Semantic Checkpoints — stub implementation.
+Execution Checkpoints — stub implementation.
 
 Community edition: checkpoints are recorded but replay/skip logic is removed.
 """

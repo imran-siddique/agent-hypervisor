@@ -162,13 +162,13 @@ def generate_agents(sessions: list[str], n_per_session: int = 5) -> pd.DataFrame
                 1 if sigma_raw > 0.85 else
                 2 if sigma_raw > 0.60 else 3
             )
-            sigma_eff = round(min(1.0, sigma_raw + rng.uniform(0, 0.15)), 3)
+            eff_score = round(min(1.0, sigma_raw + rng.uniform(0, 0.15)), 3)
             rows.append(dict(
                 session_id=sid,
                 agent_did=agent,
                 ring=ring,
                 sigma_raw=sigma_raw,
-                sigma_eff=sigma_eff,
+                eff_score=eff_score,
                 joined_at=datetime.now(timezone.utc) - timedelta(minutes=rng.randint(5, 90)),
             ))
     return pd.DataFrame(rows)
@@ -190,10 +190,10 @@ def generate_ring_transitions(agents_df: pd.DataFrame) -> pd.DataFrame:
                 direction=direction,
                 old_ring=old_ring,
                 new_ring=new_ring,
-                sigma_eff=agent["sigma_eff"],
+                eff_score=agent["eff_score"],
             ))
     return pd.DataFrame(rows) if rows else pd.DataFrame(
-        columns=["timestamp", "agent_did", "session_id", "direction", "old_ring", "new_ring", "sigma_eff"]
+        columns=["timestamp", "agent_did", "session_id", "direction", "old_ring", "new_ring", "eff_score"]
     )
 
 
@@ -386,7 +386,7 @@ m1.metric("Sessions", len(sessions_df))
 m2.metric("Agents", len(agents_df))
 m3.metric("Active Sagas", int((sagas_df["state"] == "RUNNING").sum()) if not sagas_df.empty else 0)
 m4.metric("Events", len(events_df))
-m5.metric("Vouches", len(vouches_df))
+m5.metric("Sponsors", len(vouches_df))
 
 # ---------------------------------------------------------------------------
 # Tabs
@@ -494,8 +494,8 @@ with tab_rings:
                     textposition="top center",
                     textfont=dict(size=9, color="#E0E0E0"),
                     showlegend=False,
-                    hovertemplate="%{text}<br>σ_eff: " +
-                        agents_in_ring["sigma_eff"].astype(str).tolist().__repr__() +
+                    hovertemplate="%{text}<br>eff_score: " +
+                        agents_in_ring["eff_score"].astype(str).tolist().__repr__() +
                         "<extra></extra>",
                 ))
         fig.update_layout(
@@ -531,7 +531,7 @@ with tab_rings:
                 lambda r: f"Ring {r['old_ring']} → Ring {r['new_ring']}", axis=1
             )
             st.dataframe(
-                display_df[["timestamp", "agent_did", "direction", "transition", "sigma_eff"]],
+                display_df[["timestamp", "agent_did", "direction", "transition", "eff_score"]],
                 use_container_width=True, hide_index=True,
             )
         else:
@@ -541,13 +541,13 @@ with tab_rings:
         st.subheader("Trust Score vs Ring Level")
         if not agents_df.empty:
             fig = px.scatter(
-                agents_df, x="sigma_eff", y="ring",
+                agents_df, x="eff_score", y="ring",
                 color="ring",
                 color_discrete_map={r: RING_COLORS[r] for r in range(4)},
                 hover_data=["agent_did", "sigma_raw"],
-                labels={"sigma_eff": "σ_eff (Effective Trust)", "ring": "Execution Ring"},
+                labels={"eff_score": "eff_score (Effective Trust)", "ring": "Execution Ring"},
             )
-            fig.update_layout(title="σ_eff vs Ring Level", **PLOTLY_LAYOUT)
+            fig.update_layout(title="eff_score vs Ring Level", **PLOTLY_LAYOUT)
             fig.update_yaxes(tickvals=[0, 1, 2, 3], ticktext=["Ring 0", "Ring 1", "Ring 2", "Ring 3"])
             st.plotly_chart(fig, use_container_width=True)
 
@@ -655,8 +655,8 @@ with tab_liability:
     c1, c2 = st.columns(2)
 
     with c1:
-        # Vouch network graph
-        st.markdown("#### Vouch Network")
+        # Sponsor network graph
+        st.markdown("#### Sponsor Network")
         if not vouches_df.empty:
             G = nx.DiGraph()
             for _, v in vouches_df.iterrows():
@@ -700,7 +700,7 @@ with tab_liability:
                 hoverinfo="text",
             ))
             fig.update_layout(
-                title="Vouch Network (bond amounts)",
+                title="Sponsor Network (bond amounts)",
                 showlegend=False,
                 xaxis=dict(visible=False), yaxis=dict(visible=False),
                 annotations=annotations,
@@ -708,11 +708,11 @@ with tab_liability:
             )
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("No vouches recorded.")
+            st.info("No sponsors recorded.")
 
     with c2:
-        # Slash cascade visualization
-        st.markdown("#### Slash Cascades")
+        # Penalty cascade visualization
+        st.markdown("#### Penalty Cascades")
         if not slashes_df.empty:
             fig = go.Figure()
             for _, sl in slashes_df.iterrows():
@@ -728,18 +728,18 @@ with tab_liability:
                         f"Reason: {sl['reason']}<br>"
                         f"σ: {sl['sigma_before']:.3f} → {sl['sigma_after']:.3f}<br>"
                         f"Cascade depth: {sl['cascade_depth']}<br>"
-                        f"Vouchers clipped: {sl['vouchers_clipped']}<extra></extra>"
+                        f"Sponsors clipped: {sl['vouchers_clipped']}<extra></extra>"
                     ),
                 ))
             fig.update_layout(
-                title="Slash Impact (σ drop vs cascade depth)",
+                title="Penalty Impact (σ drop vs cascade depth)",
                 xaxis_title="Cascade Depth",
                 yaxis_title="σ Score",
                 **PLOTLY_LAYOUT,
             )
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("No slash events recorded.")
+            st.info("No penalty events recorded.")
 
     st.markdown("---")
     c3, c4 = st.columns(2)
@@ -750,24 +750,24 @@ with tab_liability:
         if not agents_df.empty:
             leaderboard = (
                 agents_df.groupby("agent_did")
-                .agg(sigma_eff=("sigma_eff", "max"), sigma_raw=("sigma_raw", "max"), ring=("ring", "min"))
-                .sort_values("sigma_eff", ascending=False)
+                .agg(eff_score=("eff_score", "max"), sigma_raw=("sigma_raw", "max"), ring=("ring", "min"))
+                .sort_values("eff_score", ascending=False)
                 .reset_index()
             )
             leaderboard["rank"] = range(1, len(leaderboard) + 1)
             leaderboard["agent"] = leaderboard["agent_did"].str.split(":").str[-1]
 
             fig = go.Figure(go.Bar(
-                x=leaderboard["sigma_eff"],
+                x=leaderboard["eff_score"],
                 y=leaderboard["agent"],
                 orientation="h",
                 marker_color=[RING_COLORS.get(r, "#AAA") for r in leaderboard["ring"]],
-                text=leaderboard["sigma_eff"].apply(lambda v: f"{v:.3f}"),
+                text=leaderboard["eff_score"].apply(lambda v: f"{v:.3f}"),
                 textposition="auto",
             ))
             fig.update_layout(
-                title="Agent σ_eff Ranking",
-                xaxis_title="σ_eff", yaxis=dict(autorange="reversed"),
+                title="Agent eff_score Ranking",
+                xaxis_title="eff_score", yaxis=dict(autorange="reversed"),
                 **PLOTLY_LAYOUT,
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -777,9 +777,9 @@ with tab_liability:
         st.markdown("#### Liability Exposure Heatmap")
         if not vouches_df.empty:
             exposure = vouches_df.groupby(["voucher_did", "session_id"])["bonded_amount"].sum().reset_index()
-            exposure["voucher"] = exposure["voucher_did"].str.split(":").str[-1]
+            exposure["sponsor"] = exposure["voucher_did"].str.split(":").str[-1]
             exposure["session"] = exposure["session_id"].str[:12]
-            pivot = exposure.pivot_table(index="voucher", columns="session", values="bonded_amount", fill_value=0)
+            pivot = exposure.pivot_table(index="sponsor", columns="session", values="bonded_amount", fill_value=0)
 
             fig = go.Figure(go.Heatmap(
                 z=pivot.values,
@@ -788,7 +788,7 @@ with tab_liability:
                 colorscale="YlOrRd",
                 text=np.round(pivot.values, 3),
                 texttemplate="%{text}",
-                hovertemplate="Voucher: %{y}<br>Session: %{x}<br>Bonded σ: %{z:.3f}<extra></extra>",
+                hovertemplate="Sponsor: %{y}<br>Session: %{x}<br>Bonded σ: %{z:.3f}<extra></extra>",
             ))
             fig.update_layout(
                 title="Total Bonded σ per Agent × Session",

@@ -1,4 +1,4 @@
-"""Tests for the vouching & bonding engine and liability matrix."""
+"""Tests for the sponsorship & bonding engine and liability matrix."""
 
 import pytest
 from hypervisor.liability.vouching import VouchingEngine, VouchingError
@@ -25,7 +25,7 @@ class TestVouchingEngine:
 
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_cannot_vouch_for_self(self):
-        with pytest.raises(VouchingError, match="Cannot vouch for yourself"):
+        with pytest.raises(VouchingError, match="Cannot sponsor for yourself"):
             self.engine.vouch("did:mesh:a", "did:mesh:a", self.session, 0.8)
 
     @pytest.mark.skip("Feature not available in Community Edition")
@@ -39,32 +39,32 @@ class TestVouchingEngine:
         with pytest.raises(VouchingError, match="Circular"):
             self.engine.vouch("did:mesh:b", "did:mesh:a", self.session, 0.7)
 
-    def test_sigma_eff_formula(self):
-        """Community edition: σ_eff = vouchee's own score (no voucher boost)."""
+    def test_eff_score_formula(self):
+        """Community edition: eff_score = sponsored agent's own score (no sponsor boost)."""
         self.engine.vouch("did:mesh:high", "did:mesh:low", self.session, 0.9, bond_pct=0.5)
-        sigma_eff = self.engine.compute_sigma_eff(
+        eff_score = self.engine.compute_eff_score(
             vouchee_did="did:mesh:low",
             session_id=self.session,
             vouchee_sigma=0.3,
             risk_weight=0.2,
         )
-        assert abs(sigma_eff - 0.3) < 1e-9  # Returns vouchee_sigma directly
+        assert abs(eff_score - 0.3) < 1e-9  # Returns vouchee_sigma directly
 
-    def test_sigma_eff_capped_at_1(self):
+    def test_eff_score_capped_at_1(self):
         self.engine.vouch("did:mesh:high", "did:mesh:low", self.session, 0.9, bond_pct=0.8)
-        sigma_eff = self.engine.compute_sigma_eff(
+        eff_score = self.engine.compute_eff_score(
             "did:mesh:low", self.session, 0.8, risk_weight=1.0
         )
-        assert sigma_eff <= 1.0
+        assert eff_score <= 1.0
 
     def test_multiple_vouchers(self):
         self.engine.vouch("did:mesh:a", "did:mesh:low", self.session, 0.8, bond_pct=0.5)
         self.engine.vouch("did:mesh:b", "did:mesh:low", self.session, 0.6, bond_pct=0.5)
-        # Community edition: σ_eff = vouchee_sigma (no boost)
-        sigma_eff = self.engine.compute_sigma_eff(
+        # Community edition: eff_score = vouchee_sigma (no boost)
+        eff_score = self.engine.compute_eff_score(
             "did:mesh:low", self.session, 0.1, risk_weight=0.5
         )
-        assert abs(sigma_eff - 0.1) < 1e-9
+        assert abs(eff_score - 0.1) < 1e-9
 
     def test_release_session_bonds(self):
         self.engine.vouch("did:mesh:a", "did:mesh:b", self.session, 0.8)
