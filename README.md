@@ -90,6 +90,100 @@ Just as OS hypervisors isolate virtual machines and enforce resource boundaries,
 └──────────────────────────────────────────────────────────────┘
 ```
 
+## Architecture Diagrams
+
+### Execution Ring Hierarchy
+
+```mermaid
+graph TD
+    R0["🔴 Ring 0 — Root<br/>Hypervisor config & penalty<br/>Requires SRE Witness"]
+    R1["🟠 Ring 1 — Privileged<br/>Non-reversible actions<br/>eff_score > 0.95 + consensus"]
+    R2["🟡 Ring 2 — Standard<br/>Reversible actions<br/>eff_score > 0.60"]
+    R3["🟢 Ring 3 — Sandbox<br/>Read-only / research<br/>Default for unknown agents"]
+
+    R0 -->|"supervises"| R1
+    R1 -->|"supervises"| R2
+    R2 -->|"supervises"| R3
+```
+
+### Ring Promotion / Demotion Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Ring3 : Agent joins session
+    Ring3 --> Ring2 : eff_score rises above 0.60
+    Ring2 --> Ring1 : eff_score > 0.95 + consensus
+    Ring1 --> Ring0 : SRE Witness approval
+
+    Ring0 --> Ring1 : Trust drops / TTL expires
+    Ring1 --> Ring2 : Trust drops below 0.95
+    Ring2 --> Ring3 : Trust drops below 0.60
+    Ring3 --> [*] : Terminated / expelled
+
+    Ring2 --> Ring1 : Sudo elevation (TTL)
+    Ring1 --> Ring2 : TTL expires
+
+    note right of Ring3 : Ring breach detection\ntriggers immediate demotion
+```
+
+### Saga Lifecycle
+
+```mermaid
+flowchart LR
+    Create["Create Saga"] --> AddSteps["Add Steps"]
+    AddSteps --> Execute["Execute Steps"]
+    Execute --> Success{"All steps\nsucceed?"}
+    Success -- Yes --> Complete["✅ Saga Complete"]
+    Success -- No --> Compensate["Compensate\n(reverse order)"]
+    Compensate --> CompOk{"Compensation\nsucceeds?"}
+    CompOk -- Yes --> Rolled["↩️ Saga Rolled Back"]
+    CompOk -- No --> Escalate["⚠️ Escalate\nLiability Penalty"]
+```
+
+### Joint Liability Vouch Chain
+
+```mermaid
+flowchart TD
+    Sponsor["🛡️ Sponsor Agent<br/>eff_score: 0.92<br/>Bonds reputation"]
+    Sponsored["🤖 Sponsored Agent<br/>eff_score: 0.45<br/>Gains Ring 2 access"]
+    Action["Agent performs action"]
+    Check{"Intent\nviolation?"}
+    Safe["✅ No penalty"]
+    Penalty["🔻 Both penalized<br/>Sponsor collateral slashed<br/>Sponsored demoted"]
+
+    Sponsor -->|"vouches for"| Sponsored
+    Sponsored --> Action
+    Action --> Check
+    Check -- No --> Safe
+    Check -- Yes --> Penalty
+    Penalty -->|"collateral slash"| Sponsor
+    Penalty -->|"demotion + quarantine"| Sponsored
+```
+
+### Slash Cascade Propagation
+
+```mermaid
+flowchart TD
+    Violation["🚨 Violation Detected"]
+    Attr["Fault Attribution<br/>Identify responsible agent"]
+    Primary["Primary Agent<br/>Full penalty applied"]
+    Sponsor1["Sponsor A<br/>Collateral slashed"]
+    Sponsor2["Sponsor B<br/>Collateral slashed"]
+    Quarantine["Quarantine Agent<br/>Before termination"]
+    Demote["Demote to Ring 3"]
+    Ledger["Record in<br/>Liability Ledger"]
+
+    Violation --> Attr
+    Attr --> Primary
+    Primary --> Sponsor1
+    Primary --> Sponsor2
+    Primary --> Quarantine
+    Quarantine --> Demote
+    Sponsor1 --> Ledger
+    Sponsor2 --> Ledger
+    Primary --> Ledger
+```
+
 ## Key Features
 
 ### 🔐 Execution Rings (Hardware-Inspired Privilege Model)
