@@ -1,27 +1,32 @@
 <div align="center">
 
-# Agent Hypervisor
+# Agent Hypervisor — Community Edition
 
-**Runtime supervisor for multi-agent Shared Sessions with Execution Rings, Joint Liability, and Saga Orchestration**
+**VMware for AI Agents — runtime isolation, execution rings, and governance for autonomous agents**
+
+*Just as VMware isolates virtual machines, Agent Hypervisor isolates AI agent sessions<br/>and enforces governance boundaries with a kill switch, blast radius containment, and accountability.*
 
 [![GitHub Stars](https://img.shields.io/github/stars/imran-siddique/agent-hypervisor?style=social)](https://github.com/imran-siddique/agent-hypervisor/stargazers)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4%EF%B8%8F-ff69b4)](https://github.com/sponsors/imran-siddique)
-[![CI](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/imran-siddique/agent-hypervisor/actions)
-[![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![CI](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/agent-hypervisor)](https://pypi.org/project/agent-hypervisor/)
+[![Downloads](https://img.shields.io/pypi/dm/agent-hypervisor)](https://pypi.org/project/agent-hypervisor/)
+[![OWASP](https://img.shields.io/badge/OWASP_ASI10-Rogue_Agents-brightgreen)](https://genai.owasp.org)
+[![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
 [![Benchmark](https://img.shields.io/badge/latency-268%CE%BCs%20pipeline-orange)](benchmarks/)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/agent-hypervisor/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Discussions](https://img.shields.io/github/discussions/imran-siddique/agent-hypervisor)](https://github.com/imran-siddique/agent-hypervisor/discussions)
 
-> :star: **If this project helps you, please star it!** It helps others discover Agent Hypervisor.
-
-> :link: **Part of the Agent Governance Ecosystem** -- Works with [Agent OS](https://github.com/imran-siddique/agent-os) (kernel), [AgentMesh](https://github.com/imran-siddique/agent-mesh) (trust network), and [Agent SRE](https://github.com/imran-siddique/agent-sre) (reliability)
+> ⭐ **If this project helps you, please star it!** It helps others discover Agent Hypervisor.
 
 > 📦 **Install the full stack:** `pip install ai-agent-governance[full]` — [PyPI](https://pypi.org/project/ai-agent-governance/) | [GitHub](https://github.com/imran-siddique/agent-governance)
 
-[Quick Start](#quick-start) | [Why a Hypervisor?](#why-a-hypervisor) | [Features](#key-features) | [Performance](#performance) | [Modules](#modules) | [Ecosystem](#ecosystem)
+[Quick Start](#quick-start) • [Why a Hypervisor?](#-why-agent-hypervisor) • [Features](#key-features) • [Architecture](#architecture-diagrams) • [Performance](#performance) • [Ecosystem](#ecosystem)
 
 </div>
+
+---
 
 ### Integrated Into Major AI Frameworks
 
@@ -31,9 +36,35 @@
   <a href="https://github.com/github/awesome-copilot/pull/755"><img src="https://img.shields.io/badge/Awesome_Copilot-Merged-success?style=flat-square" alt="Awesome Copilot"></a>
   <a href="https://github.com/microsoft/agent-lightning/pull/478"><img src="https://img.shields.io/badge/Agent--Lightning-15K_%E2%AD%90_Merged-success?style=flat-square" alt="Agent-Lightning"></a>
   <a href="https://github.com/magsther/awesome-opentelemetry/pull/24"><img src="https://img.shields.io/badge/awesome--opentelemetry-listed-orange?style=flat-square" alt="awesome-opentelemetry"></a>
-  <img src="https://img.shields.io/badge/Open_PRs-25+-blue?style=flat-square" alt="Open PRs">
-  <img src="https://img.shields.io/badge/Framework_Issues-94+-blue?style=flat-square" alt="Issues">
 </p>
+
+## 📊 By The Numbers
+
+<table>
+<tr>
+<td align="center"><h3>457+</h3><sub>Tests Passing</sub></td>
+<td align="center"><h3>4</h3><sub>Execution Rings<br/>(Ring 0–3)</sub></td>
+<td align="center"><h3>268μs</h3><sub>Full Governance<br/>Pipeline Latency</sub></td>
+<td align="center"><h3>v2.0</h3><sub>Saga Compensation<br/>Kill Switch · Rate Limits</sub></td>
+</tr>
+</table>
+
+## 💡 Why Agent Hypervisor?
+
+> **The problem:** AI agents run with unlimited resources, no isolation, and no kill switch. A single rogue agent in a shared session can escalate privileges, corrupt state, or cascade failures across your entire system.
+
+> **Our solution:** A hypervisor that enforces execution rings, resource limits, saga compensation, and runtime governance — giving you a kill switch, blast radius containment, and joint liability for agent accountability.
+
+### How It Maps to What You Already Know
+
+| OS / VM Hypervisor | Agent Hypervisor | Why It Matters |
+|-------------------|-----------------|----------------|
+| CPU rings (Ring 0–3) | **Execution Rings** — privilege levels based on trust score | Graduated access, not binary allow/deny |
+| Process isolation | **Session isolation** — VFS namespacing, DID-bound identity | Rogue agents can't corrupt other sessions |
+| Memory protection | **Liability protection** — bonded reputation, collateral slash | Sponsors have skin in the game |
+| System calls | **Saga transactions** — multi-step ops with automatic rollback | Failed workflows undo themselves |
+| Watchdog timer | **Kill switch** — graceful termination with step handoff | Stop runaway agents without data loss |
+| Audit logs | **Hash-chained delta trail** — tamper-evident forensic trail | Prove exactly what happened |
 
 ## Quick Start
 
@@ -45,49 +76,35 @@ pip install agent-hypervisor
 from hypervisor import Hypervisor, SessionConfig, ConsistencyMode
 
 hv = Hypervisor()
+
+# Create an isolated session with governance
 session = await hv.create_session(
     config=SessionConfig(enable_audit=True),
     creator_did="did:mesh:admin",
 )
-ring = await hv.join_session(session.sso.session_id, "did:mesh:agent-1", sigma_raw=0.85)
+
+# Agent joins — ring assigned automatically by trust score
+ring = await hv.join_session(
+    session.sso.session_id,
+    "did:mesh:agent-1",
+    sigma_raw=0.85,
+)
 # → RING_2_STANDARD (trusted agent)
-```
 
-## Why a Hypervisor?
+# Activate and run a governed saga
+await hv.activate_session(session.sso.session_id)
+saga = session.saga.create_saga(session.sso.session_id)
+step = session.saga.add_step(
+    saga.saga_id, "draft_email", "did:mesh:agent-1",
+    execute_api="/api/draft", undo_api="/api/undo-draft",
+    timeout_seconds=30, max_retries=2,
+)
+result = await session.saga.execute_step(
+    saga.saga_id, step.step_id, executor=draft_email,
+)
 
-Just as OS hypervisors isolate virtual machines and enforce resource boundaries, the **Agent Hypervisor** isolates AI agent sessions and enforces **governance boundaries**:
-
-| OS Hypervisor | Agent Hypervisor |
-|---------------|-----------------|
-| CPU rings (Ring 0–3) | **Execution Rings** — privilege levels based on trust score (eff_score) |
-| Process isolation | **Session isolation** — VFS namespacing, DID-bound identity |
-| Memory protection | **Liability protection** — bonded reputation, collateral penalty |
-| System calls | **Saga transactions** — multi-step operations with automatic rollback |
-| Audit logs | **audit-logged delta trail** — tamper-evident forensic trail |
-
-## Architecture
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                      AGENT HYPERVISOR                        │
-│                                                              │
-│  ┌─────────────┐ ┌──────────────┐ ┌────────────────────────┐ │
-│  │   Session    │ │    Ring      │ │   Semantic Saga        │ │
-│  │   Manager    │ │   Enforcer   │ │   Orchestrator         │ │
-│  │             │ │              │ │  ┌──────────────────┐  │ │
-│  │  SSO + VFS  │ │  Ring 0–3    │ │  │ Timeout + Retry  │  │ │
-│  │  Lifecycle  │ │  eff_score gates │ │  │ Compensation     │  │ │
-│  └──────┬──────┘ └──────┬───────┘ │  │ Escalation       │  │ │
-│         │               │         │  └──────────────────┘  │ │
-│  ┌──────┴──────┐ ┌──────┴───────┐ └────────────┬───────────┘ │
-│  │  Liability  │ │ Reversibility│               │            │
-│  │  Engine     │ │  Registry    │ ┌─────────────┴──────────┐ │
-│  │             │ │              │ │   Delta Audit Engine    │ │
-│  │  Sponsor +    │ │  Execute/    │ │                        │ │
-│  │  Bond +     │ │  Undo API    │ │  Audit Log + GC     │ │
-│  │  Penalize      │ │  Mapping     │ │  Hash Commit         │ │
-│  └─────────────┘ └──────────────┘ └────────────────────────┘ │
-└──────────────────────────────────────────────────────────────┘
+# Terminate — returns tamper-evident audit hash
+hash_root = await hv.terminate_session(session.sso.session_id)
 ```
 
 ## Architecture Diagrams
@@ -186,7 +203,55 @@ flowchart TD
 
 ## Key Features
 
-### 🔐 Execution Rings (Hardware-Inspired Privilege Model)
+<table>
+<tr>
+<td width="50%">
+
+### 🔐 Execution Rings
+Hardware-inspired privilege model (Ring 0–3). Agents earn ring access based on trust score. Real-time demotion on trust drops. Sudo elevation with TTL. Breach detection with circuit breakers.
+
+</td>
+<td width="50%">
+
+### 🛑 Kill Switch
+Graceful termination with saga step handoff to substitute agents. Rate limiting per agent per ring (sandbox: 5 rps, root: 100 rps). Stop runaway agents without data loss.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🔄 Saga Compensation
+Multi-step transactions with timeout enforcement, retry with backoff, reverse-order compensation, and escalation to liability. Parallel execution with ALL/MAJORITY/ANY policies.
+
+</td>
+<td width="50%">
+
+### 🤝 Joint Liability
+High-trust agents sponsor low-trust agents by bonding reputation. If the sponsored agent violates intent, **both are penalized**. Fault attribution, quarantine-before-terminate, persistent ledger.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📋 Hash-Chained Audit
+Forensic-grade delta trails — semantic diffs, hash-chained entries, summary commitment at session end. Garbage collection preserves forensic artifacts.
+
+</td>
+<td width="50%">
+
+### 📡 Observability
+Structured event bus emits typed events for every action. Causal trace IDs with full delegation tree encoding. Version counters for causal consistency.
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>📖 Feature details (click to expand)</b></summary>
+
+### 🔐 Execution Rings — Deep Dive
 
 ```
 Ring 0 (Root)       — Hypervisor config & penalty — requires SRE Witness
@@ -195,49 +260,25 @@ Ring 2 (Standard)   — Reversible actions — requires eff_score > 0.60
 Ring 3 (Sandbox)    — Read-only / research — default for unknown agents
 ```
 
-Agents are automatically assigned to rings based on their effective trust score. Ring demotion happens in real-time if trust drops.
+**v2.0 additions:** Dynamic ring elevation (sudo with TTL), ring breach detection with circuit breakers, ring inheritance for spawned agents.
 
-**v2.0:** Dynamic ring elevation (sudo with TTL), ring breach detection with circuit breakers, ring inheritance for spawned agents.
+### 🔄 Saga Orchestrator — Deep Dive
 
-### 🤝 Joint Liability (Trust as Collateral)
-
-High-trust agents can **sponsor** for low-trust agents by bonding a percentage of their reputation. If the sponsored agent violates intent, **both agents are penalized** — the sponsor's collateral is penalized.
-
-**v2.0:** Improved fault attribution, quarantine-before-terminate, persistent liability ledger for admission decisions.
-
-### 🔄 Semantic Saga Orchestrator
-
-Multi-step agent transactions with:
 - **Timeout enforcement** — steps that hang are automatically cancelled
 - **Retry with backoff** — transient failures retry with exponential delay
 - **Reverse-order compensation** — on failure, all committed steps are undone
 - **Escalation** — if compensation fails, Joint Liability penalty is triggered
+- **Parallel execution** — ALL_MUST_SUCCEED / MAJORITY / ANY policies
+- **Execution checkpoints** — partial replay without re-running completed effects
+- **Declarative DSL** — define sagas via YAML or dict
 
-**v2.0:** Parallel execution (ALL/MAJORITY/ANY policies), execution checkpoints for partial replay, declarative YAML/dict DSL.
-
-### 🔒 Session Consistency (NEW in v2.0)
+### 🔒 Session Consistency
 
 - **Version counters** — causal consistency for shared VFS state
 - **Resource locks** — READ/WRITE/EXCLUSIVE with lock timeout
 - **Isolation levels** — SNAPSHOT, READ_COMMITTED, SERIALIZABLE per saga
 
-### 🛡️ Security (NEW in v2.0)
-
-- **Rate limiting** — token bucket per agent per ring (sandbox: 5 rps, root: 100 rps)
-- **Kill switch** — graceful termination with saga step handoff to substitute agents
-
-### 📡 Observability (NEW in v2.0)
-
-- **Structured event bus** — every hypervisor action emits typed events
-- **Causal trace IDs** — distributed tracing with full delegation tree encoding
-
-### 📋 Delta Audit Engine
-
-Forensic-grade audit trails using:
-- **Semantic diffs** — captures what changed, not full snapshots
-- **audit loging** — each delta references its parent hash (tamper-evident)
-- **hash commitment** — Summary Hash computed at session end (blockchain anchoring planned)
-- **Garbage collection** — ephemeral data purged, forensic artifacts retained
+</details>
 
 ## Performance
 
@@ -257,49 +298,6 @@ Forensic-grade audit trails using:
 pip install agent-hypervisor
 ```
 
-## Quick Start
-
-```python
-from hypervisor import Hypervisor, SessionConfig, ConsistencyMode
-
-hv = Hypervisor()
-
-# Create a shared session
-session = await hv.create_session(
-    config=SessionConfig(
-        consistency_mode=ConsistencyMode.EVENTUAL,
-        max_participants=5,
-        min_eff_score=0.60,
-    ),
-    creator_did="did:mesh:admin",
-)
-
-# Agents join via IATP handshake — ring assigned by trust score
-ring = await hv.join_session(
-    session.sso.session_id,
-    agent_did="did:mesh:agent-alpha",
-    sigma_raw=0.85,
-)
-# → ExecutionRing.RING_2_STANDARD
-
-# Activate and execute
-await hv.activate_session(session.sso.session_id)
-
-# Multi-step saga with automatic compensation
-saga = session.saga.create_saga(session.sso.session_id)
-step = session.saga.add_step(
-    saga.saga_id, "draft_email", "did:mesh:agent-alpha",
-    execute_api="/api/draft", undo_api="/api/undo-draft",
-    timeout_seconds=30, max_retries=2,
-)
-result = await session.saga.execute_step(
-    saga.saga_id, step.step_id, executor=draft_email
-)
-
-# Terminate — returns audit log root summary hash
-hash_chain_root = await hv.terminate_session(session.sso.session_id)
-```
-
 ## Modules
 
 | Module | Description | Tests |
@@ -316,7 +314,7 @@ hash_chain_root = await hv.terminate_session(session.sso.session_id)
 | `hypervisor.integrations` | Nexus, Verification, IATP cross-module adapters | -- |
 | **Integration** | End-to-end lifecycle, edge cases, security | **24** |
 | **Scenarios** | Cross-module governance pipelines (7 suites) | **18** |
-| **Total** | | **326** |
+| **Total** | | **457** |
 
 ## Test Suite
 
@@ -363,31 +361,29 @@ Tabs: Session Overview | Execution Rings | Saga Orchestration | Liability & Trus
 
 Agent Hypervisor is part of the **Agent Governance Ecosystem** — four specialized repos that work together:
 
-`
-┌─────────────────────────────────────────────────────────────┐
-│                  Agent Governance Ecosystem                   │
-│                                                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │   Agent OS    │  │  Agent Mesh  │  │    Agent SRE     │   │
-│  │  Governance   │  │   Trust      │  │   Reliability    │   │
-│  │  Kernel       │  │   Network    │  │   Platform       │   │
-│  └──────┬───────┘  └──────┬───────┘  └───────┬──────────┘   │
-│         │                 │                   │               │
-│         └─────────┬───────┴───────────┬───────┘               │
-│                   │                   │                       │
-│          ┌────────┴───────────────────┴────────┐              │
-│          │        Agent Hypervisor              │              │
-│          │  Runtime supervisor for all agents   │              │
-│          └──────────────────────────────────────┘              │
-└─────────────────────────────────────────────────────────────┘
-`
+```mermaid
+graph TB
+    subgraph Ecosystem["Agent Governance Ecosystem"]
+        OS["🧠 Agent OS<br/>Policy Enforcement Kernel"]
+        Mesh["🔗 Agent Mesh<br/>Cryptographic Trust Network"]
+        SRE["📊 Agent SRE<br/>Reliability Platform"]
+        HV["⚡ Agent Hypervisor<br/>Runtime Governance"]
+
+        OS <-->|"policies"| HV
+        Mesh <-->|"trust scores"| HV
+        SRE <-->|"SLOs + chaos"| HV
+        OS <-->|"identity"| Mesh
+    end
+
+    style HV fill:#ff6b6b,stroke:#333,color:#fff
+```
 
 | Repo | Role | Stars |
 |------|------|-------|
 | [Agent OS](https://github.com/imran-siddique/agent-os) | Policy enforcement kernel | 1,500+ tests |
 | [Agent Mesh](https://github.com/imran-siddique/agent-mesh) | Cryptographic trust network | 1,400+ tests |
 | [Agent SRE](https://github.com/imran-siddique/agent-sre) | SLO, chaos, cost guardrails | 1,070+ tests |
-| **Agent Hypervisor** | Session isolation & governance runtime | 326 tests |
+| **Agent Hypervisor** | Session isolation & governance runtime | 457+ tests |
 
 ## Frequently Asked Questions
 
