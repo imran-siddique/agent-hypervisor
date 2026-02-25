@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 import uuid
+
+# Agent ID must be alphanumeric, hyphens, underscores, colons, or dots (e.g. "did:mesh:agent-1")
+_AGENT_ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._:@-]*$")
+# Max lengths
+_MAX_AGENT_ID_LENGTH = 256
+_MAX_NAME_LENGTH = 256
+_MAX_API_PATH_LENGTH = 2048
+# Session config limits
+_MAX_PARTICIPANTS_LIMIT = 1000
+_MAX_DURATION_LIMIT = 604_800  # 7 days in seconds
+_MAX_UNDO_WINDOW = 86_400  # 24 hours in seconds
 
 
 class ConsistencyMode(str, Enum):
@@ -76,6 +88,35 @@ class SessionState(str, Enum):
     ARCHIVED = "archived"
 
 
+def _validate_identifier(value: str, field_name: str) -> None:
+    """Validate an identifier string (agent DID, action ID, etc.)."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string, got {type(value).__name__}")
+    if not value or not value.strip():
+        raise ValueError(f"{field_name} must not be empty")
+    if len(value) > _MAX_AGENT_ID_LENGTH:
+        raise ValueError(
+            f"{field_name} exceeds maximum length of {_MAX_AGENT_ID_LENGTH} characters"
+        )
+    if not _AGENT_ID_PATTERN.match(value):
+        raise ValueError(
+            f"{field_name} contains invalid characters: {value!r}. "
+            f"Only alphanumeric, hyphens, underscores, colons, dots, and @ are allowed."
+        )
+
+
+def _validate_api_path(value: str, field_name: str) -> None:
+    """Validate an API path string."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string, got {type(value).__name__}")
+    if not value or not value.strip():
+        raise ValueError(f"{field_name} must not be empty")
+    if len(value) > _MAX_API_PATH_LENGTH:
+        raise ValueError(
+            f"{field_name} exceeds maximum length of {_MAX_API_PATH_LENGTH} characters"
+        )
+
+
 @dataclass
 class SessionConfig:
     """Configuration for a new Shared Session."""
@@ -86,6 +127,43 @@ class SessionConfig:
     min_eff_score: float = 0.60
     enable_audit: bool = True
     enable_blockchain_commitment: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.max_participants, int):
+            raise TypeError(
+                f"max_participants must be an integer, got {type(self.max_participants).__name__}"
+            )
+        if self.max_participants < 1:
+            raise ValueError(
+                f"max_participants must be at least 1, got {self.max_participants}"
+            )
+        if self.max_participants > _MAX_PARTICIPANTS_LIMIT:
+            raise ValueError(
+                f"max_participants must not exceed {_MAX_PARTICIPANTS_LIMIT}, "
+                f"got {self.max_participants}"
+            )
+        if not isinstance(self.max_duration_seconds, int):
+            raise TypeError(
+                f"max_duration_seconds must be an integer, "
+                f"got {type(self.max_duration_seconds).__name__}"
+            )
+        if self.max_duration_seconds < 1:
+            raise ValueError(
+                f"max_duration_seconds must be at least 1, got {self.max_duration_seconds}"
+            )
+        if self.max_duration_seconds > _MAX_DURATION_LIMIT:
+            raise ValueError(
+                f"max_duration_seconds must not exceed {_MAX_DURATION_LIMIT} (7 days), "
+                f"got {self.max_duration_seconds}"
+            )
+        if not isinstance(self.min_eff_score, (int, float)):
+            raise TypeError(
+                f"min_eff_score must be a number, got {type(self.min_eff_score).__name__}"
+            )
+        if not (0.0 <= self.min_eff_score <= 1.0):
+            raise ValueError(
+                f"min_eff_score must be between 0.0 and 1.0, got {self.min_eff_score}"
+            )
 
 
 @dataclass
@@ -98,6 +176,32 @@ class SessionParticipant:
     eff_score: float = 0.0
     joined_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
+
+    def __post_init__(self) -> None:
+        _validate_identifier(self.agent_did, "agent_did")
+        if not isinstance(self.ring, ExecutionRing):
+            try:
+                self.ring = ExecutionRing(self.ring)
+            except (ValueError, KeyError):
+                raise ValueError(
+                    f"ring must be a valid ExecutionRing (0-3), got {self.ring!r}"
+                )
+        if not isinstance(self.sigma_raw, (int, float)):
+            raise TypeError(
+                f"sigma_raw must be a number, got {type(self.sigma_raw).__name__}"
+            )
+        if not (0.0 <= self.sigma_raw <= 1.0):
+            raise ValueError(
+                f"sigma_raw must be between 0.0 and 1.0, got {self.sigma_raw}"
+            )
+        if not isinstance(self.eff_score, (int, float)):
+            raise TypeError(
+                f"eff_score must be a number, got {type(self.eff_score).__name__}"
+            )
+        if not (0.0 <= self.eff_score <= 1.0):
+            raise ValueError(
+                f"eff_score must be between 0.0 and 1.0, got {self.eff_score}"
+            )
 
 
 @dataclass
@@ -113,6 +217,32 @@ class ActionDescriptor:
     compensation_method: Optional[str] = None
     is_read_only: bool = False
     is_admin: bool = False
+
+    def __post_init__(self) -> None:
+        _validate_identifier(self.action_id, "action_id")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("name must be a non-empty string")
+        if len(self.name) > _MAX_NAME_LENGTH:
+            raise ValueError(
+                f"name exceeds maximum length of {_MAX_NAME_LENGTH} characters"
+            )
+        _validate_api_path(self.execute_api, "execute_api")
+        if self.undo_api is not None:
+            _validate_api_path(self.undo_api, "undo_api")
+        if not isinstance(self.undo_window_seconds, int):
+            raise TypeError(
+                f"undo_window_seconds must be an integer, "
+                f"got {type(self.undo_window_seconds).__name__}"
+            )
+        if self.undo_window_seconds < 0:
+            raise ValueError(
+                f"undo_window_seconds must not be negative, got {self.undo_window_seconds}"
+            )
+        if self.undo_window_seconds > _MAX_UNDO_WINDOW:
+            raise ValueError(
+                f"undo_window_seconds must not exceed {_MAX_UNDO_WINDOW} (24 hours), "
+                f"got {self.undo_window_seconds}"
+            )
 
     @property
     def risk_weight(self) -> float:
