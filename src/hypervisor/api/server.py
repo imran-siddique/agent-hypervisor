@@ -9,6 +9,7 @@ Run with: uvicorn hypervisor.api.server:app
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -56,6 +57,8 @@ from hypervisor.api.models import (
     VerifyHistoryResponse,
     VouchResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── Global state ────────────────────────────────────────────────────────────
 
@@ -262,6 +265,7 @@ async def join_session(session_id: str, req: JoinSessionRequest) -> JoinSessionR
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        logger.debug("join_session failed for %s: %s", session_id, e, exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     return JoinSessionResponse(
         agent_did=req.agent_did,
@@ -279,6 +283,7 @@ async def activate_session(session_id: str) -> dict[str, str]:
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        logger.debug("activate_session failed for %s: %s", session_id, e, exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     return {"session_id": session_id, "state": "active"}
 
@@ -291,6 +296,7 @@ async def terminate_session(session_id: str) -> dict[str, Any]:
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
+        logger.debug("terminate_session failed for %s: %s", session_id, e, exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     return {
         "session_id": session_id,
@@ -470,6 +476,7 @@ async def add_saga_step(saga_id: str, req: AddStepRequest) -> AddStepResponse:
                     max_retries=req.max_retries,
                 )
             except Exception as e:
+                logger.debug("add_step failed for saga %s: %s", saga_id, e, exc_info=True)
                 raise HTTPException(status_code=400, detail=str(e))
             return AddStepResponse(
                 step_id=step.step_id,
@@ -497,6 +504,7 @@ async def execute_saga_step(saga_id: str, step_id: str) -> ExecuteStepResponse:
 
                 await managed.saga.execute_step(saga_id, step_id, _noop_executor)
             except Exception as e:
+                logger.debug("execute_step failed for saga %s step %s: %s", saga_id, step_id, e, exc_info=True)
                 raise HTTPException(status_code=400, detail=str(e))
             # Find the step to return its state
             for st in saga.steps:
@@ -531,6 +539,7 @@ async def create_vouch(session_id: str, req: CreateVouchRequest) -> VouchRespons
             bond_pct=req.bond_pct,
         )
     except Exception as e:
+        logger.debug("create_vouch failed for session %s: %s", session_id, e, exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     return VouchResponse(
         vouch_id=record.vouch_id,
