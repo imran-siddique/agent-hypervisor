@@ -1,0 +1,72 @@
+# Agent Hypervisor — Docker Compose Example
+#
+# Services:
+#   - hypervisor-api: FastAPI server exposing the hypervisor REST API
+#   - sample-agents:  Registers demo agents and runs a saga workflow
+#   - redis:          State storage backend
+#   - dashboard:      Optional lightweight web dashboard (port 8501)
+#
+# Usage:
+#   docker compose up --build
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  hypervisor-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - HYPERVISOR_CONFIG=/app/config/hypervisor.yaml
+    volumes:
+      - ./app:/app/app
+      - ./config:/app/config
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  sample-agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m app.sample_workflow
+    environment:
+      - HYPERVISOR_API=http://hypervisor-api:8000
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      hypervisor-api:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m app.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - HYPERVISOR_API=http://hypervisor-api:8000
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      hypervisor-api:
+        condition: service_healthy

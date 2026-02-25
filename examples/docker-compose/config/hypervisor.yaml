@@ -1,0 +1,30 @@
+# Agent Hypervisor — Example Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+redis:
+  url: "redis://redis:6379/0"
+
+hypervisor:
+  # Default session settings
+  default_consistency_mode: "eventual"
+  max_participants: 10
+  max_duration_seconds: 3600
+  min_eff_score: 0.60
+  enable_audit: true
+
+rings:
+  # Execution ring thresholds
+  ring_1_min_eff_score: 0.95
+  ring_2_min_eff_score: 0.60
+  # Agents below ring_2 threshold are placed in Ring 3 (sandbox)
+
+kill_switch:
+  enabled: true
+  # Auto-kill agents that breach ring constraints
+  auto_kill_on_breach: true
+
+logging:
+  level: "INFO"
