@@ -41,6 +41,8 @@ _INACTIVE_STATES = frozenset({SessionState.ARCHIVED, SessionState.TERMINATING})
 class ManagedSession:
     """A session with all its associated engines wired together."""
 
+    __slots__ = ("sso", "reversibility", "delta_engine", "saga")
+
     def __init__(self, sso: SharedSessionObject) -> None:
         self.sso = sso
         self.reversibility = ReversibilityRegistry(sso.session_id)
