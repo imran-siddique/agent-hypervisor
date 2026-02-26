@@ -69,6 +69,9 @@ Documentation = "https://github.com/imran-siddique/agent-hypervisor#readme"
 "Agent Mesh" = "https://github.com/imran-siddique/agent-mesh"
 "Agent SRE" = "https://github.com/imran-siddique/agent-sre"
 
+[project.scripts]
+hypervisor = "hypervisor.cli.session_commands:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/hypervisor"]
 
