@@ -15,6 +15,46 @@ import uuid
 from hypervisor.models import ExecutionRing
 
 
+class RingElevationError(Exception):
+    """Raised for invalid ring elevation requests."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        current_ring: Optional[ExecutionRing] = None,
+        target_ring: Optional[ExecutionRing] = None,
+        reason: Optional[str] = None,
+        agent_did: str = "",
+    ) -> None:
+        super().__init__(message)
+        self.current_ring = current_ring
+        self.target_ring = target_ring
+        self.denial_reason = reason
+        self.agent_did = agent_did
+
+
+class ElevationDenialReason:
+    """Standard denial reasons for ring elevation failures."""
+
+    COMMUNITY_EDITION = "community_edition"
+    INVALID_TARGET = "invalid_target"
+    RING_0_FORBIDDEN = "ring_0_forbidden"
+    INSUFFICIENT_TRUST = "insufficient_trust"
+    NO_SPONSORSHIP = "no_sponsorship"
+    EXPIRED_TTL = "expired_ttl"
+
+
+_RING_LABELS: dict[ExecutionRing, str] = {
+    ExecutionRing.RING_0_ROOT: "Ring 0 (Root)",
+    ExecutionRing.RING_1_PRIVILEGED: "Ring 1 (Privileged)",
+    ExecutionRing.RING_2_STANDARD: "Ring 2 (Standard)",
+    ExecutionRing.RING_3_SANDBOX: "Ring 3 (Sandbox)",
+}
+
+_DOCS_URL = "https://github.com/imran-siddique/agent-hypervisor/blob/main/docs/rings.md"
+
+
 @dataclass
 class RingElevation:
     """A ring elevation grant (stub in community edition)."""
@@ -59,8 +99,51 @@ class RingElevationManager:
         reason: str = "",
     ) -> RingElevation:
         """Request temporary ring elevation (community edition: always denied)."""
+        # Validate: target must be a higher privilege (lower numeric value)
+        if target_ring.value >= current_ring.value:
+            denial = ElevationDenialReason.INVALID_TARGET
+            raise RingElevationError(
+                _build_elevation_error_message(
+                    current_ring=current_ring,
+                    target_ring=target_ring,
+                    reason=denial,
+                    agent_did=agent_did,
+                ),
+                current_ring=current_ring,
+                target_ring=target_ring,
+                reason=denial,
+                agent_did=agent_did,
+            )
+
+        # Validate: Ring 0 cannot be requested via standard API
+        if target_ring == ExecutionRing.RING_0_ROOT:
+            denial = ElevationDenialReason.RING_0_FORBIDDEN
+            raise RingElevationError(
+                _build_elevation_error_message(
+                    current_ring=current_ring,
+                    target_ring=target_ring,
+                    reason=denial,
+                    agent_did=agent_did,
+                ),
+                current_ring=current_ring,
+                target_ring=target_ring,
+                reason=denial,
+                agent_did=agent_did,
+            )
+
+        # Community edition: all valid requests are denied
+        denial = ElevationDenialReason.COMMUNITY_EDITION
         raise RingElevationError(
-            "Ring elevation is not available in the community edition"
+            _build_elevation_error_message(
+                current_ring=current_ring,
+                target_ring=target_ring,
+                reason=denial,
+                agent_did=agent_did,
+            ),
+            current_ring=current_ring,
+            target_ring=target_ring,
+            reason=denial,
+            agent_did=agent_did,
         )
 
     def get_active_elevation(self, agent_did: str, session_id: str) -> Optional[RingElevation]:
@@ -84,5 +167,52 @@ class RingElevationManager:
         return []
 
 
-class RingElevationError(Exception):
-    """Raised for invalid ring elevation requests."""
+_REMEDIATION: dict[str, str] = {
+    ElevationDenialReason.COMMUNITY_EDITION: (
+        "Upgrade to the Enterprise edition to enable ring elevation, "
+        "or request access from your organization admin."
+    ),
+    ElevationDenialReason.INVALID_TARGET: (
+        "Request a target ring with a lower numeric value (higher privilege) "
+        "than the agent's current ring."
+    ),
+    ElevationDenialReason.RING_0_FORBIDDEN: (
+        "Ring 0 requires SRE Witness attestation and cannot be requested "
+        "via the standard elevation API. Contact your platform team."
+    ),
+    ElevationDenialReason.INSUFFICIENT_TRUST: (
+        "Increase the agent's effective trust score above the required "
+        "threshold by completing successful operations in the current ring."
+    ),
+    ElevationDenialReason.NO_SPONSORSHIP: (
+        "Obtain a sponsorship from a Ring 1 or Ring 0 agent to vouch "
+        "for this elevation request."
+    ),
+    ElevationDenialReason.EXPIRED_TTL: (
+        "Submit a new elevation request with a valid TTL "
+        f"(max {RingElevationManager.MAX_ELEVATION_TTL}s)."
+    ),
+}
+
+
+def _build_elevation_error_message(
+    *,
+    current_ring: ExecutionRing,
+    target_ring: ExecutionRing,
+    reason: str,
+    agent_did: str = "",
+) -> str:
+    """Build a structured, actionable error message for elevation failures."""
+    current_label = _RING_LABELS.get(current_ring, str(current_ring))
+    target_label = _RING_LABELS.get(target_ring, str(target_ring))
+    remediation = _REMEDIATION.get(reason, "Review the elevation requirements.")
+
+    parts = [
+        f"Ring elevation denied: {current_label} -> {target_label}",
+    ]
+    if agent_did:
+        parts.append(f"  Agent: {agent_did}")
+    parts.append(f"  Reason: {reason}")
+    parts.append(f"  Remediation: {remediation}")
+    parts.append(f"  Docs: {_DOCS_URL}")
+    return "\n".join(parts)

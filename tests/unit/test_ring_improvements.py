@@ -8,6 +8,7 @@ from hypervisor.rings.elevation import (
     RingElevationManager,
     RingElevation,
     RingElevationError,
+    ElevationDenialReason,
 )
 from hypervisor.rings.breach_detector import (
     RingBreachDetector,
@@ -171,3 +172,128 @@ class TestBreachDetector:
     @pytest.mark.skip("Feature not available in Community Edition")
     def test_mixed_call_pattern(self):
         pass
+
+
+# ── Ring Elevation Error Message Tests ─────────────────────────
+
+
+class TestRingElevationErrorMessages:
+    """Tests for improved ring elevation error messages (issue #4)."""
+
+    def test_error_includes_current_and_target_ring(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="did:mesh:agent-1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        msg = str(exc_info.value)
+        assert "Ring 3 (Sandbox)" in msg
+        assert "Ring 2 (Standard)" in msg
+
+    def test_error_includes_agent_did(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="did:mesh:agent-1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        msg = str(exc_info.value)
+        assert "did:mesh:agent-1" in msg
+
+    def test_error_includes_denial_reason(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        err = exc_info.value
+        assert err.denial_reason == ElevationDenialReason.COMMUNITY_EDITION
+
+    def test_error_includes_remediation(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        msg = str(exc_info.value)
+        assert "Remediation:" in msg
+
+    def test_error_includes_docs_link(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        msg = str(exc_info.value)
+        assert "Docs:" in msg
+        assert "docs/rings.md" in msg
+
+    def test_invalid_target_demotion(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_2_STANDARD,
+                target_ring=ExecutionRing.RING_3_SANDBOX,
+            )
+        err = exc_info.value
+        assert err.denial_reason == ElevationDenialReason.INVALID_TARGET
+        assert err.current_ring == ExecutionRing.RING_2_STANDARD
+        assert err.target_ring == ExecutionRing.RING_3_SANDBOX
+        assert "Ring 2 (Standard)" in str(err)
+        assert "Ring 3 (Sandbox)" in str(err)
+
+    def test_invalid_target_same_ring(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_2_STANDARD,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        err = exc_info.value
+        assert err.denial_reason == ElevationDenialReason.INVALID_TARGET
+
+    def test_ring_0_forbidden(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="a1",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_1_PRIVILEGED,
+                target_ring=ExecutionRing.RING_0_ROOT,
+            )
+        err = exc_info.value
+        assert err.denial_reason == ElevationDenialReason.RING_0_FORBIDDEN
+        assert "SRE Witness" in str(err)
+
+    def test_error_structured_attributes(self):
+        mgr = RingElevationManager()
+        with pytest.raises(RingElevationError) as exc_info:
+            mgr.request_elevation(
+                agent_did="did:mesh:test",
+                session_id="s1",
+                current_ring=ExecutionRing.RING_3_SANDBOX,
+                target_ring=ExecutionRing.RING_2_STANDARD,
+            )
+        err = exc_info.value
+        assert err.current_ring == ExecutionRing.RING_3_SANDBOX
+        assert err.target_ring == ExecutionRing.RING_2_STANDARD
+        assert err.agent_did == "did:mesh:test"
+        assert err.denial_reason == ElevationDenialReason.COMMUNITY_EDITION

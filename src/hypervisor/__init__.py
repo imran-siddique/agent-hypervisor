@@ -43,7 +43,7 @@ from hypervisor.liability.ledger import LiabilityLedger, LedgerEntryType
 # Execution rings
 from hypervisor.rings.enforcer import RingEnforcer
 from hypervisor.rings.classifier import ActionClassifier
-from hypervisor.rings.elevation import RingElevationManager, RingElevation
+from hypervisor.rings.elevation import RingElevationManager, RingElevation, ElevationDenialReason
 from hypervisor.rings.breach_detector import RingBreachDetector, BreachSeverity
 
 # Reversibility
@@ -115,6 +115,7 @@ __all__ = [
     "ActionClassifier",
     "RingElevationManager",
     "RingElevation",
+    "ElevationDenialReason",
     "RingBreachDetector",
     "BreachSeverity",
     # Reversibility
