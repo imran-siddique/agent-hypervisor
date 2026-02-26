@@ -61,7 +61,8 @@ class SharedSessionObject:
 
     @property
     def participant_count(self) -> int:
-        return len(self.participants)
+        # Avoid building a filtered list just to count
+        return sum(1 for p in self._participants.values() if p.is_active)
 
     def _assert_state(self, *allowed: SessionState) -> None:
         if self.state not in allowed:

@@ -492,3 +492,74 @@ class TestEdgeCases:
 
         await hypervisor.terminate_session(managed.sso.session_id)
         assert managed.sso.state == SessionState.ARCHIVED
+
+
+# ---------------------------------------------------------------------------
+# Active index tracking
+# ---------------------------------------------------------------------------
+
+class TestActiveIndex:
+    async def test_active_ids_tracks_creation(self, hypervisor, config):
+        managed = await hypervisor.create_session(config, creator_did=CREATOR)
+        assert managed.sso.session_id in hypervisor._active_ids
+
+    async def test_active_ids_removed_on_terminate(self, hypervisor, config):
+        managed = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(managed.sso.session_id, AGENT_1, sigma_raw=0.85)
+        await hypervisor.activate_session(managed.sso.session_id)
+        await hypervisor.terminate_session(managed.sso.session_id)
+        assert managed.sso.session_id not in hypervisor._active_ids
+
+    async def test_active_ids_consistent_with_active_sessions(self, hypervisor, config):
+        s1 = await hypervisor.create_session(config, creator_did=CREATOR)
+        s2 = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(s1.sso.session_id, AGENT_1, sigma_raw=0.85)
+        await hypervisor.activate_session(s1.sso.session_id)
+        await hypervisor.terminate_session(s1.sso.session_id)
+        active = hypervisor.active_sessions
+        assert len(active) == 1
+        assert active[0].sso.session_id == s2.sso.session_id
+
+
+# ---------------------------------------------------------------------------
+# monitor_sessions
+# ---------------------------------------------------------------------------
+
+class TestMonitorSessions:
+    async def test_monitor_empty(self, hypervisor):
+        issues = await hypervisor.monitor_sessions()
+        assert issues == []
+
+    async def test_monitor_healthy_agents(self, hypervisor, config):
+        managed = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(managed.sso.session_id, AGENT_1, sigma_raw=0.85)
+        await hypervisor.activate_session(managed.sso.session_id)
+        issues = await hypervisor.monitor_sessions(drift_threshold=0.5)
+        assert issues == []
+
+    async def test_monitor_flags_low_score(self, hypervisor, config):
+        managed = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(managed.sso.session_id, AGENT_1, sigma_raw=0.30)
+        await hypervisor.activate_session(managed.sso.session_id)
+        issues = await hypervisor.monitor_sessions(drift_threshold=0.5)
+        assert len(issues) == 1
+        assert issues[0]["agent_did"] == AGENT_1
+
+    async def test_monitor_skips_terminated(self, hypervisor, config):
+        managed = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(managed.sso.session_id, AGENT_1, sigma_raw=0.30)
+        await hypervisor.activate_session(managed.sso.session_id)
+        await hypervisor.terminate_session(managed.sso.session_id)
+        issues = await hypervisor.monitor_sessions(drift_threshold=0.5)
+        assert issues == []
+
+    async def test_monitor_multiple_sessions(self, hypervisor, config):
+        s1 = await hypervisor.create_session(config, creator_did=CREATOR)
+        s2 = await hypervisor.create_session(config, creator_did=CREATOR)
+        await hypervisor.join_session(s1.sso.session_id, AGENT_1, sigma_raw=0.85)
+        await hypervisor.join_session(s2.sso.session_id, AGENT_2, sigma_raw=0.30)
+        await hypervisor.activate_session(s1.sso.session_id)
+        await hypervisor.activate_session(s2.sso.session_id)
+        issues = await hypervisor.monitor_sessions(drift_threshold=0.5)
+        assert len(issues) == 1
+        assert issues[0]["agent_did"] == AGENT_2

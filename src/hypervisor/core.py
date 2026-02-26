@@ -23,6 +23,7 @@ from hypervisor.models import (
     ConsistencyMode,
     ExecutionRing,
     SessionConfig,
+    SessionState,
 )
 from hypervisor.reversibility.registry import ReversibilityRegistry
 from hypervisor.rings.classifier import ActionClassifier
@@ -32,6 +33,9 @@ from hypervisor.session import SharedSessionObject
 from hypervisor.verification.history import TransactionHistoryVerifier
 
 logger = logging.getLogger(__name__)
+
+# States considered inactive (no longer need monitoring)
+_INACTIVE_STATES = frozenset({SessionState.ARCHIVED, SessionState.TERMINATING})
 
 
 class ManagedSession:
@@ -89,6 +93,8 @@ class Hypervisor:
 
         # Active sessions
         self._sessions: dict[str, ManagedSession] = {}
+        # Index of session IDs still requiring monitoring (non-archived/terminating)
+        self._active_ids: set[str] = set()
 
     async def create_session(
         self,
@@ -100,6 +106,7 @@ class Hypervisor:
         sso.begin_handshake()
         managed = ManagedSession(sso)
         self._sessions[sso.session_id] = managed
+        self._active_ids.add(sso.session_id)
         return managed
 
     async def join_session(
@@ -198,32 +205,37 @@ class Hypervisor:
         managed = self._get_session(session_id)
         managed.sso.terminate()
 
-        hash_chain_root = None
-        if managed.sso.config.enable_audit:
-            hash_chain_root = managed.delta_engine.compute_hash_chain_root()
-            if hash_chain_root:
-                self.commitment.commit(
-                    session_id=session_id,
-                    hash_chain_root=hash_chain_root,
-                    participant_dids=[p.agent_did for p in managed.sso.participants],
-                    delta_count=managed.delta_engine.turn_count,
-                )
+        hash_chain_root = self._commit_audit(session_id, managed)
+        self._cleanup_session(session_id, managed)
 
-        # Release all bonds
+        return hash_chain_root
+
+    def _commit_audit(self, session_id: str, managed: ManagedSession) -> Optional[str]:
+        """Commit audit trail and return hash chain root (None if audit disabled)."""
+        if not managed.sso.config.enable_audit:
+            return None
+        hash_chain_root = managed.delta_engine.compute_hash_chain_root()
+        if hash_chain_root:
+            self.commitment.commit(
+                session_id=session_id,
+                hash_chain_root=hash_chain_root,
+                participant_dids=[p.agent_did for p in managed.sso.participants],
+                delta_count=managed.delta_engine.turn_count,
+            )
+        return hash_chain_root
+
+    def _cleanup_session(self, session_id: str, managed: ManagedSession) -> None:
+        """Release bonds, purge VFS data, and archive session."""
         self.vouching.release_session_bonds(session_id)
-
-        # GC — actually purge VFS data
         self.gc.collect(
             session_id=session_id,
             vfs=managed.sso.vfs if hasattr(managed.sso, "vfs") else None,
             delta_engine=managed.delta_engine,
             delta_count=managed.delta_engine.turn_count,
         )
-
-        # Archive
         managed.sso.archive()
-
-        return hash_chain_root
+        # Remove from active index after archiving
+        self._active_ids.discard(session_id)
 
     def get_session(self, session_id: str) -> Optional[ManagedSession]:
         return self._sessions.get(session_id)
@@ -259,6 +271,7 @@ class Hypervisor:
         if result.should_slash:
             managed = self._get_session(session_id)
             participant = managed.sso.get_participant(agent_did)
+            # Build scores dict only for the slash path (avoid on healthy agents)
             agent_scores = {
                 p.agent_did: p.eff_score
                 for p in managed.sso.participants
@@ -285,13 +298,51 @@ class Hypervisor:
 
     @property
     def active_sessions(self) -> list[ManagedSession]:
-        return [
-            m for m in self._sessions.values()
-            if m.sso.state.value not in ("archived", "terminating")
-        ]
+        # Use the active index to skip archived/terminated sessions
+        return [self._sessions[sid] for sid in self._active_ids
+                if sid in self._sessions]
 
     def _get_session(self, session_id: str) -> ManagedSession:
         managed = self._sessions.get(session_id)
         if not managed:
             raise ValueError(f"Session {session_id} not found")
         return managed
+
+    async def monitor_sessions(
+        self,
+        drift_threshold: float = 0.5,
+    ) -> list[dict[str, Any]]:
+        """
+        Batch-monitor all active sessions with early exits.
+
+        Skips archived/terminated sessions via the active index and skips
+        healthy agents (those with eff_score above the drift threshold) to
+        reduce per-iteration overhead.
+
+        Returns a list of issues found (empty if all healthy).
+        """
+        issues: list[dict[str, Any]] = []
+        # Iterate only over active session IDs (O(active) not O(total))
+        for sid in list(self._active_ids):
+            managed = self._sessions.get(sid)
+            if managed is None:
+                self._active_ids.discard(sid)
+                continue
+            state = managed.sso.state
+            # Early exit: skip sessions that have transitioned to inactive
+            if state in _INACTIVE_STATES:
+                self._active_ids.discard(sid)
+                continue
+            # Batch-check participants; skip healthy agents
+            for p in managed.sso.participants:
+                if p.eff_score >= drift_threshold:
+                    continue
+                # Only flag agents below threshold
+                issues.append({
+                    "session_id": sid,
+                    "agent_did": p.agent_did,
+                    "eff_score": p.eff_score,
+                    "ring": p.ring,
+                    "state": state.value,
+                })
+        return issues

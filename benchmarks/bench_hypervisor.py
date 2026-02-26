@@ -240,6 +240,36 @@ async def bench_full_pipeline():
 
 
 # ---------------------------------------------------------------------------
+# Benchmark: Monitor Sessions (batch with early exits)
+# ---------------------------------------------------------------------------
+
+@benchmark_async("monitor_50_sessions", iterations=2000)
+async def bench_monitor_sessions():
+    hv = Hypervisor()
+    # Create 50 sessions: 40 active (healthy), 10 terminated
+    for i in range(50):
+        s = await hv.create_session(config=SessionConfig(), creator_did="did:mesh:admin")
+        await hv.join_session(s.sso.session_id, f"did:mesh:a{i}", sigma_raw=0.8)
+        await hv.activate_session(s.sso.session_id)
+        if i >= 40:
+            await hv.terminate_session(s.sso.session_id)
+    await hv.monitor_sessions()
+
+
+@benchmark_async("active_sessions_100", iterations=5000)
+async def bench_active_sessions():
+    hv = Hypervisor()
+    for i in range(100):
+        s = await hv.create_session(config=SessionConfig(), creator_did="did:mesh:admin")
+        await hv.join_session(s.sso.session_id, f"did:mesh:a{i}", sigma_raw=0.8)
+        await hv.activate_session(s.sso.session_id)
+        # Terminate half
+        if i % 2 == 0:
+            await hv.terminate_session(s.sso.session_id)
+    _ = hv.active_sessions
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -259,6 +289,8 @@ def main():
         bench_session_lifecycle,
         bench_saga_3_steps,
         bench_full_pipeline,
+        bench_monitor_sessions,
+        bench_active_sessions,
     ]
 
     results = []
