@@ -13,6 +13,7 @@ from typing import Any, Optional
 import uuid
 
 from hypervisor.saga.fan_out import FanOutPolicy
+from hypervisor.saga.schema import SagaSchemaValidator, SagaSchemaError
 from hypervisor.saga.state_machine import SagaStep
 
 
@@ -70,8 +71,18 @@ class SagaDSLParser:
     Community edition: fan-out groups are parsed but ignored during execution.
     """
 
+    def __init__(self, *, schema_validation: bool = False) -> None:
+        self._schema_validator = SagaSchemaValidator() if schema_validation else None
+
     def parse(self, definition: dict[str, Any]) -> SagaDefinition:
-        """Parse a saga definition dict into a SagaDefinition."""
+        """Parse a saga definition dict into a SagaDefinition.
+
+        If schema_validation was enabled at construction, validates against
+        the JSON schema before parsing.
+        """
+        if self._schema_validator is not None:
+            self._schema_validator.validate_or_raise(definition)
+
         name = definition.get("name", "")
         if not name:
             raise SagaDSLError("Saga definition must have a 'name'")
