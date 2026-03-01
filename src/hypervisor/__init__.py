@@ -14,7 +14,7 @@ Usage:
 Version: 2.0.0
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 # Core models
 from hypervisor.models import (
