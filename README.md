@@ -720,6 +720,17 @@ graph TB
 | [Agent SRE](https://github.com/imran-siddique/agent-sre) | SLO, chaos, cost guardrails | 1,070+ tests |
 | **Agent Hypervisor** | Session isolation & governance runtime | 457+ tests |
 
+## 🗺️ Roadmap
+
+| Quarter | Milestone |
+|---------|-----------|
+| **Q1 2026** | ✅ v2.0 — Execution rings, saga orchestration, joint liability, shared sessions |
+| **Q2 2026** | Distributed hypervisor (multi-node), WebSocket real-time dashboard, Redis-backed sessions |
+| **Q3 2026** | Kubernetes operator for auto-scaling ring policies, CNCF Sandbox application |
+| **Q4 2026** | v3.0 — Federated hypervisor mesh, cross-org agent governance, SOC2 attestation |
+
+---
+
 ## Frequently Asked Questions
 
 **Why use a hypervisor for AI agents?**
