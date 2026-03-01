@@ -153,6 +153,8 @@ ring = await hv.join_session(
 
 Agents can request temporary privilege escalation with a TTL:
 
+> **Note:** Ring elevation is available in the Enterprise Edition. Community Edition includes the API surface but returns a denial response. See the architecture for how it works.
+
 ```python
 from hypervisor import RingElevationManager
 
