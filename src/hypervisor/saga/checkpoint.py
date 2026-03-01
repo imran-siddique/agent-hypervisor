@@ -7,11 +7,11 @@ Community edition: checkpoints are recorded but replay/skip logic is removed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
 import hashlib
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -23,10 +23,10 @@ class SemanticCheckpoint:
     step_id: str = ""
     goal_description: str = ""
     goal_hash: str = ""
-    achieved_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    achieved_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     state_snapshot: dict[str, Any] = field(default_factory=dict)
     is_valid: bool = True
-    invalidated_reason: Optional[str] = None
+    invalidated_reason: str | None = None
 
     @staticmethod
     def compute_goal_hash(goal: str, step_id: str) -> str:
@@ -49,7 +49,7 @@ class CheckpointManager:
         saga_id: str,
         step_id: str,
         goal_description: str,
-        state_snapshot: Optional[dict] = None,
+        state_snapshot: dict | None = None,
     ) -> SemanticCheckpoint:
         """Save a checkpoint record."""
         goal_hash = SemanticCheckpoint.compute_goal_hash(goal_description, step_id)
@@ -78,7 +78,7 @@ class CheckpointManager:
         saga_id: str,
         goal_description: str,
         step_id: str,
-    ) -> Optional[SemanticCheckpoint]:
+    ) -> SemanticCheckpoint | None:
         """Returns None (community edition: no replay support)."""
         return None
 

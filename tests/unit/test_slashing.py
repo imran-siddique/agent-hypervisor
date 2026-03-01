@@ -1,8 +1,9 @@
 """Tests for the penalty engine."""
 
 import pytest
-from hypervisor.liability.vouching import VouchingEngine
+
 from hypervisor.liability.slashing import SlashingEngine
+from hypervisor.liability.vouching import VouchingEngine
 
 
 class TestSlashingEngine:

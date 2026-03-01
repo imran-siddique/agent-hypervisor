@@ -8,9 +8,9 @@ into Hypervisor-compatible action descriptors and ring hints.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 from hypervisor.models import (
     ActionDescriptor,
@@ -66,7 +66,7 @@ class ManifestAnalysis:
     scopes: list[str]
     has_reversible_actions: bool
     has_non_reversible_actions: bool
-    analyzed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    analyzed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class IATPAdapter:
@@ -128,5 +128,5 @@ class IATPAdapter:
         self._manifest_cache[agent_did] = analysis
         return analysis
 
-    def get_cached_analysis(self, agent_did: str) -> Optional[ManifestAnalysis]:
+    def get_cached_analysis(self, agent_did: str) -> ManifestAnalysis | None:
         return self._manifest_cache.get(agent_did)

@@ -11,10 +11,10 @@ verification backends when adapters are provided.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from hypervisor.audit.commitment import CommitmentEngine
-from hypervisor.audit.delta import DeltaEngine, VFSChange
+from hypervisor.audit.delta import DeltaEngine
 from hypervisor.audit.gc import EphemeralGC, RetentionPolicy
 from hypervisor.liability.slashing import SlashingEngine
 from hypervisor.liability.vouching import VouchingEngine
@@ -69,11 +69,11 @@ class Hypervisor:
 
     def __init__(
         self,
-        retention_policy: Optional[RetentionPolicy] = None,
-        max_exposure: Optional[float] = None,
-        nexus: Optional[Any] = None,
-        policy_check: Optional[Any] = None,
-        iatp: Optional[Any] = None,
+        retention_policy: RetentionPolicy | None = None,
+        max_exposure: float | None = None,
+        nexus: Any | None = None,
+        policy_check: Any | None = None,
+        iatp: Any | None = None,
     ) -> None:
         # Shared engines
         self.vouching = VouchingEngine(max_exposure=max_exposure)
@@ -115,10 +115,10 @@ class Hypervisor:
         self,
         session_id: str,
         agent_did: str,
-        actions: Optional[list[ActionDescriptor]] = None,
+        actions: list[ActionDescriptor] | None = None,
         sigma_raw: float = 0.0,
-        manifest: Optional[Any] = None,
-        agent_history: Optional[Any] = None,
+        manifest: Any | None = None,
+        agent_history: Any | None = None,
     ) -> ExecutionRing:
         """
         Join an agent to a session via extended IATP handshake.
@@ -197,7 +197,7 @@ class Hypervisor:
         managed = self._get_session(session_id)
         managed.sso.activate()
 
-    async def terminate_session(self, session_id: str) -> Optional[str]:
+    async def terminate_session(self, session_id: str) -> str | None:
         """
         Terminate a session and commit audit trail.
 
@@ -212,7 +212,7 @@ class Hypervisor:
 
         return hash_chain_root
 
-    def _commit_audit(self, session_id: str, managed: ManagedSession) -> Optional[str]:
+    def _commit_audit(self, session_id: str, managed: ManagedSession) -> str | None:
         """Commit audit trail and return hash chain root (None if audit disabled)."""
         if not managed.sso.config.enable_audit:
             return None
@@ -239,7 +239,7 @@ class Hypervisor:
         # Remove from active index after archiving
         self._active_ids.discard(session_id)
 
-    def get_session(self, session_id: str) -> Optional[ManagedSession]:
+    def get_session(self, session_id: str) -> ManagedSession | None:
         return self._sessions.get(session_id)
 
     async def verify_behavior(
@@ -248,8 +248,8 @@ class Hypervisor:
         agent_did: str,
         claimed_embedding: Any,
         observed_embedding: Any,
-        action_id: Optional[str] = None,
-    ) -> Optional[Any]:
+        action_id: str | None = None,
+    ) -> Any | None:
         """
         Verify agent behavior via Verification adapter.
 

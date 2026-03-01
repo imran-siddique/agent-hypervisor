@@ -1,12 +1,13 @@
 """Tests for per-agent rate limiter."""
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timezone, timedelta
 
 from hypervisor.models import ExecutionRing
 from hypervisor.security.rate_limiter import (
-    AgentRateLimiter,
     DEFAULT_RING_LIMITS,
+    AgentRateLimiter,
     RateLimitExceeded,
     RateLimitStats,
     TokenBucket,
@@ -31,34 +32,34 @@ class TestTokenBucket:
             assert bucket.consume(1.0) is True
         # Tokens should be exhausted (no refill since rate=0 and very fast)
         # Need to account for possible tiny refill, so set last_refill to now
-        bucket.last_refill = datetime.now(timezone.utc)
+        bucket.last_refill = datetime.now(UTC)
         bucket.tokens = 0.0
         assert bucket.consume(1.0) is False
 
     def test_consume_insufficient(self):
         bucket = TokenBucket(capacity=10.0, tokens=0.0, refill_rate=0.0)
-        bucket.last_refill = datetime.now(timezone.utc)
+        bucket.last_refill = datetime.now(UTC)
         assert bucket.consume(1.0) is False
 
     def test_consume_exact_amount(self):
         bucket = TokenBucket(capacity=5.0, tokens=3.0, refill_rate=0.0)
-        bucket.last_refill = datetime.now(timezone.utc)
+        bucket.last_refill = datetime.now(UTC)
         assert bucket.consume(3.0) is True
 
     def test_refill_over_time(self):
         bucket = TokenBucket(capacity=10.0, tokens=0.0, refill_rate=100.0)
         # Simulate time passing by setting last_refill in the past
-        bucket.last_refill = datetime.now(timezone.utc) - timedelta(seconds=1)
+        bucket.last_refill = datetime.now(UTC) - timedelta(seconds=1)
         assert bucket.consume(5.0) is True
 
     def test_refill_caps_at_capacity(self):
         bucket = TokenBucket(capacity=10.0, tokens=0.0, refill_rate=100.0)
-        bucket.last_refill = datetime.now(timezone.utc) - timedelta(seconds=10)
+        bucket.last_refill = datetime.now(UTC) - timedelta(seconds=10)
         assert bucket.available <= 10.0
 
     def test_available_property(self):
         bucket = TokenBucket(capacity=10.0, tokens=5.0, refill_rate=0.0)
-        bucket.last_refill = datetime.now(timezone.utc)
+        bucket.last_refill = datetime.now(UTC)
         assert bucket.available == pytest.approx(5.0, abs=0.1)
 
 

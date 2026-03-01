@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -18,9 +17,9 @@ class VFSEdit:
     path: str
     operation: str  # "create", "update", "delete", "permission", "restore"
     agent_did: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    content_hash: Optional[str] = None
-    previous_hash: Optional[str] = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    content_hash: str | None = None
+    previous_hash: str | None = None
 
 
 class VFSPermissionError(Exception):
@@ -35,7 +34,7 @@ class SessionVFS:
     (threading.Lock omitted since Python GIL provides serialization).
     """
 
-    def __init__(self, session_id: str, namespace: Optional[str] = None):
+    def __init__(self, session_id: str, namespace: str | None = None):
         self.session_id = session_id
         self.namespace = namespace or f"/sessions/{session_id}"
         self._files: dict[str, str] = {}
@@ -60,7 +59,7 @@ class SessionVFS:
         self._edit_log.append(edit)
         return edit
 
-    def read(self, path: str, agent_did: Optional[str] = None) -> Optional[str]:
+    def read(self, path: str, agent_did: str | None = None) -> str | None:
         """Read a file."""
         full_path = self._resolve(path)
         if agent_did is not None:
@@ -103,10 +102,10 @@ class SessionVFS:
         full_path = self._resolve(path)
         self._permissions.pop(full_path, None)
 
-    def get_permissions(self, path: str) -> Optional[set[str]]:
+    def get_permissions(self, path: str) -> set[str] | None:
         return self._permissions.get(self._resolve(path))
 
-    def create_snapshot(self, snapshot_id: Optional[str] = None) -> str:
+    def create_snapshot(self, snapshot_id: str | None = None) -> str:
         """Snapshot current state (simple deep copy)."""
         sid = snapshot_id or f"snap:{uuid.uuid4()}"
         self._snapshots[sid] = {

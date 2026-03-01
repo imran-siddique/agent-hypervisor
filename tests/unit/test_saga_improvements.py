@@ -1,24 +1,22 @@
 """Tests for saga fan-out, execution checkpoints, and declarative DSL."""
 
-import pytest
-import asyncio
 
-from hypervisor.saga.fan_out import (
-    FanOutOrchestrator,
-    FanOutPolicy,
-    FanOutGroup,
-)
+import pytest
+
 from hypervisor.saga.checkpoint import (
     CheckpointManager,
     SemanticCheckpoint,
 )
 from hypervisor.saga.dsl import (
-    SagaDSLParser,
-    SagaDefinition,
     SagaDSLError,
+    SagaDSLParser,
 )
-from hypervisor.saga.state_machine import SagaStep, StepState
-
+from hypervisor.saga.fan_out import (
+    FanOutGroup,
+    FanOutOrchestrator,
+    FanOutPolicy,
+)
+from hypervisor.saga.state_machine import SagaStep
 
 # ── Fan-Out Tests ───────────────────────────────────────────────
 

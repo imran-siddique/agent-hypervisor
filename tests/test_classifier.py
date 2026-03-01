@@ -1,6 +1,5 @@
 """Tests for action risk classifier."""
 
-import pytest
 
 from hypervisor.models import ActionDescriptor, ExecutionRing, ReversibilityLevel
 from hypervisor.rings.classifier import ActionClassifier, ClassificationResult

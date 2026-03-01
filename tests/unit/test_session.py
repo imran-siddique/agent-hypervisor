@@ -1,11 +1,12 @@
 """Tests for session management and VFS."""
 
 import pytest
+
 from hypervisor.models import ConsistencyMode, ExecutionRing, SessionConfig
 from hypervisor.session import (
-    SharedSessionObject,
     SessionLifecycleError,
     SessionParticipantError,
+    SharedSessionObject,
 )
 from hypervisor.session.sso import SessionVFS
 

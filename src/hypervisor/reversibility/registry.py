@@ -7,8 +7,7 @@ populated during the IATP handshake.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 from hypervisor.models import ActionDescriptor, ReversibilityLevel
 
@@ -19,13 +18,13 @@ class ReversibilityEntry:
 
     action_id: str
     execute_api: str
-    undo_api: Optional[str]
+    undo_api: str | None
     reversibility: ReversibilityLevel
     undo_window_seconds: int
-    compensation_method: Optional[str]
+    compensation_method: str | None
     risk_weight: float
     undo_api_healthy: bool = True
-    last_health_check: Optional[str] = None
+    last_health_check: str | None = None
 
 
 class ReversibilityRegistry:
@@ -60,11 +59,11 @@ class ReversibilityRegistry:
             self.register(action)
         return len(actions)
 
-    def get(self, action_id: str) -> Optional[ReversibilityEntry]:
+    def get(self, action_id: str) -> ReversibilityEntry | None:
         """Look up an action's reversibility entry."""
         return self._entries.get(action_id)
 
-    def get_undo_api(self, action_id: str) -> Optional[str]:
+    def get_undo_api(self, action_id: str) -> str | None:
         """Get the Undo_API for an action, if any."""
         entry = self._entries.get(action_id)
         return entry.undo_api if entry else None

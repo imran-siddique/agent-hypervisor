@@ -1,8 +1,9 @@
 """Tests for delta audit engine and commitment."""
 
-import pytest
-from hypervisor.audit.delta import DeltaEngine, VFSChange
+from datetime import UTC
+
 from hypervisor.audit.commitment import CommitmentEngine
+from hypervisor.audit.delta import DeltaEngine, VFSChange
 from hypervisor.audit.gc import EphemeralGC, RetentionPolicy
 
 
@@ -89,10 +90,10 @@ class TestEphemeralGC:
         assert result.savings_pct == 0
 
     def test_retention_policy(self):
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
         gc = EphemeralGC(RetentionPolicy(delta_retention_days=30))
-        old = datetime.now(timezone.utc) - timedelta(days=31)
+        old = datetime.now(UTC) - timedelta(days=31)
         # Community edition: never expires deltas
         assert not gc.should_expire_deltas(old)
-        recent = datetime.now(timezone.utc) - timedelta(days=1)
+        recent = datetime.now(UTC) - timedelta(days=1)
         assert not gc.should_expire_deltas(recent)

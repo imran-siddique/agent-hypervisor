@@ -1,9 +1,8 @@
 """Tests for ring enforcer and action classifier."""
 
-import pytest
 from hypervisor.models import ActionDescriptor, ExecutionRing, ReversibilityLevel
-from hypervisor.rings.enforcer import RingEnforcer
 from hypervisor.rings.classifier import ActionClassifier
+from hypervisor.rings.enforcer import RingEnforcer
 
 
 class TestRingEnforcer:

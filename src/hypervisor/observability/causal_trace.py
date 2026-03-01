@@ -9,8 +9,8 @@ Format: {trace_id}/{span_id}[/{parent_span_id}]
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import uuid
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)

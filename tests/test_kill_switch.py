@@ -1,6 +1,5 @@
 """Tests for kill switch."""
 
-import pytest
 from datetime import datetime
 
 from hypervisor.security.kill_switch import (

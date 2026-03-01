@@ -9,8 +9,8 @@ session lifetime only.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -24,7 +24,7 @@ class GCResult:
     purged_caches: int
     storage_before_bytes: int
     storage_after_bytes: int
-    gc_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    gc_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def storage_saved_bytes(self) -> int:
@@ -51,7 +51,7 @@ class EphemeralGC:
     GC stub (community edition: logs collection requests, no actual purge).
     """
 
-    def __init__(self, policy: Optional[RetentionPolicy] = None) -> None:
+    def __init__(self, policy: RetentionPolicy | None = None) -> None:
         self.policy = policy or RetentionPolicy()
         self._gc_history: list[GCResult] = []
         self._purged_sessions: set[str] = set()

@@ -13,9 +13,6 @@ from __future__ import annotations
 import math
 import time
 from itertools import combinations
-from typing import Optional
-
-import pytest
 
 from hypervisor.liability.attribution import (
     AttributionResult,
@@ -23,9 +20,7 @@ from hypervisor.liability.attribution import (
     FaultAttribution,
 )
 from hypervisor.liability.ledger import LedgerEntryType, LiabilityLedger
-from hypervisor.liability.slashing import SlashingEngine
 from hypervisor.liability.vouching import VouchingEngine
-
 
 # ── Shapley-value helpers ───────────────────────────────────────────
 # Implements game-theoretic Shapley value computation so we can verify
@@ -39,7 +34,7 @@ def _factorial(n: int) -> int:
 def characteristic_value(
     coalition: frozenset[str],
     fault_agents: set[str],
-    weights: Optional[dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
     """Characteristic function v(S): value (fault contribution) of a coalition.
 
@@ -57,14 +52,14 @@ def characteristic_value(
 def compute_shapley_values(
     agents: list[str],
     fault_agents: set[str],
-    weights: Optional[dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> dict[str, float]:
     """Compute exact Shapley values for each agent.
 
     φ_i = Σ_{S⊆N\\{i}} [ |S|!(n-|S|-1)! / n! ] * [v(S∪{i}) - v(S)]
     """
     n = len(agents)
-    shapley: dict[str, float] = {a: 0.0 for a in agents}
+    shapley: dict[str, float] = dict.fromkeys(agents, 0.0)
     n_fact = _factorial(n)
 
     for agent in agents:
@@ -86,7 +81,7 @@ def normalize_shapley(values: dict[str, float]) -> dict[str, float]:
     """Normalize Shapley values to sum to 1.0 (liability shares)."""
     total = sum(values.values())
     if total == 0:
-        return {k: 0.0 for k in values}
+        return dict.fromkeys(values, 0.0)
     return {k: v / total for k, v in values.items()}
 
 
@@ -178,7 +173,7 @@ class TestEqualContribution:
         agents = ["a", "b", "c", "d"]
         fault_agents = {"a", "b", "c", "d"}
         values = compute_shapley_values(agents, fault_agents)
-        unique_values = set(round(v, 10) for v in values.values())
+        unique_values = {round(v, 10) for v in values.values()}
         assert len(unique_values) == 1
 
     def test_equal_attribution_sums_to_one(self):

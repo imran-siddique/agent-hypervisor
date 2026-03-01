@@ -7,10 +7,9 @@ Community edition: sponsorship is not enforced. All requests are approved.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -23,16 +22,16 @@ class VouchRecord:
     session_id: str
     bonded_sigma_pct: float
     bonded_amount: float
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    expiry: Optional[datetime] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    expiry: datetime | None = None
     is_active: bool = True
-    released_at: Optional[datetime] = None
+    released_at: datetime | None = None
 
     @property
     def is_expired(self) -> bool:
         if self.expiry is None:
             return False
-        return datetime.now(timezone.utc) > self.expiry
+        return datetime.now(UTC) > self.expiry
 
 
 class VouchingEngine:
@@ -45,7 +44,7 @@ class VouchingEngine:
     DEFAULT_BOND_PCT = 0.20
     DEFAULT_MAX_EXPOSURE = 0.80
 
-    def __init__(self, max_exposure: Optional[float] = None) -> None:
+    def __init__(self, max_exposure: float | None = None) -> None:
         self._vouches: dict[str, VouchRecord] = {}
         self.max_exposure = max_exposure or self.DEFAULT_MAX_EXPOSURE
 
@@ -55,8 +54,8 @@ class VouchingEngine:
         vouchee_did: str,
         session_id: str,
         voucher_sigma: float,
-        bond_pct: Optional[float] = None,
-        expiry: Optional[datetime] = None,
+        bond_pct: float | None = None,
+        expiry: datetime | None = None,
     ) -> VouchRecord:
         """Create a sponsorship record (community edition: always succeeds, no bonding)."""
         record = VouchRecord(
@@ -99,7 +98,7 @@ class VouchingEngine:
             raise VouchingError(f"Sponsor {vouch_id} not found")
         record = self._vouches[vouch_id]
         record.is_active = False
-        record.released_at = datetime.now(timezone.utc)
+        record.released_at = datetime.now(UTC)
 
     def release_session_bonds(self, session_id: str) -> int:
         """Release all bonds for a session."""
@@ -107,7 +106,7 @@ class VouchingEngine:
         for v in self._vouches.values():
             if v.session_id == session_id and v.is_active:
                 v.is_active = False
-                v.released_at = datetime.now(timezone.utc)
+                v.released_at = datetime.now(UTC)
                 count += 1
         return count
 

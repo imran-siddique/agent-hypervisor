@@ -7,11 +7,10 @@ Community edition: immediate agent termination, no task transfer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class KillReason(str, Enum):
@@ -41,7 +40,7 @@ class StepHandoff:
     step_id: str
     saga_id: str
     from_agent: str
-    to_agent: Optional[str] = None
+    to_agent: str | None = None
     status: HandoffStatus = HandoffStatus.COMPENSATED
 
 
@@ -53,7 +52,7 @@ class KillResult:
     agent_did: str = ""
     session_id: str = ""
     reason: KillReason = KillReason.MANUAL
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     handoffs: list[StepHandoff] = field(default_factory=list)
     handoff_success_count: int = 0
     compensation_triggered: bool = False
@@ -87,7 +86,7 @@ class KillSwitch:
         agent_did: str,
         session_id: str,
         reason: KillReason,
-        in_flight_steps: Optional[list[dict]] = None,
+        in_flight_steps: list[dict] | None = None,
         details: str = "",
     ) -> KillResult:
         """Kill an agent immediately (community edition: no handoff)."""
@@ -118,7 +117,7 @@ class KillSwitch:
 
     def _find_substitute(
         self, session_id: str, exclude_did: str
-    ) -> Optional[str]:
+    ) -> str | None:
         return None
 
     @property

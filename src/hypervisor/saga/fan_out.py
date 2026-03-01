@@ -9,10 +9,11 @@ Fan-out groups execute branches one at a time.
 from __future__ import annotations
 
 import asyncio
+import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
-import uuid
+from typing import Any
 
 from hypervisor.saga.state_machine import SagaStep, StepState
 
@@ -26,9 +27,9 @@ class FanOutPolicy(str, Enum):
 @dataclass
 class FanOutBranch:
     branch_id: str = field(default_factory=lambda: f"branch:{uuid.uuid4().hex[:8]}")
-    step: Optional[SagaStep] = None
+    step: SagaStep | None = None
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     succeeded: bool = False
 
 
@@ -109,7 +110,7 @@ class FanOutOrchestrator:
             group.compensation_needed = [b.step.step_id for b in group.branches if b.succeeded and b.step]
         return group
 
-    def get_group(self, group_id: str) -> Optional[FanOutGroup]:
+    def get_group(self, group_id: str) -> FanOutGroup | None:
         return self._groups.get(group_id)
 
     def _get_group(self, group_id: str) -> FanOutGroup:

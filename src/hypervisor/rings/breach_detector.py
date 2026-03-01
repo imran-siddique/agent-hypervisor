@@ -9,9 +9,8 @@ All methods return safe defaults.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 from hypervisor.models import ExecutionRing
 
@@ -35,7 +34,7 @@ class BreachEvent:
     call_count_window: int
     expected_rate: float
     actual_rate: float
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     details: str = ""
 
 
@@ -52,7 +51,7 @@ class RingBreachDetector:
         session_id: str,
         agent_ring: ExecutionRing,
         called_ring: ExecutionRing,
-    ) -> Optional[BreachEvent]:
+    ) -> BreachEvent | None:
         """Record a ring call (community edition: no-op, never detects breach)."""
         return None
 

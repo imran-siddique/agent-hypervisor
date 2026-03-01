@@ -14,9 +14,8 @@ resolution is planned for a future release.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 
 class VerificationStatus(str, Enum):
@@ -48,7 +47,7 @@ class VerificationResult:
     transactions_checked: int
     transactions_found: int
     inconsistencies: list[str] = field(default_factory=list)
-    verified_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    verified_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     cached: bool = False
 
     @property
@@ -77,7 +76,7 @@ class TransactionHistoryVerifier:
     def verify(
         self,
         agent_did: str,
-        declared_history: Optional[list[TransactionRecord]] = None,
+        declared_history: list[TransactionRecord] | None = None,
     ) -> VerificationResult:
         """
         Verify an agent's transaction history.
@@ -135,7 +134,7 @@ class TransactionHistoryVerifier:
         self._cache[agent_did] = result
         return result
 
-    def clear_cache(self, agent_did: Optional[str] = None) -> None:
+    def clear_cache(self, agent_did: str | None = None) -> None:
         """Clear verification cache."""
         if agent_did:
             self._cache.pop(agent_did, None)

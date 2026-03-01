@@ -9,8 +9,7 @@ No blockchain anchoring.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -21,8 +20,8 @@ class CommitmentRecord:
     hash_chain_root: str
     participant_dids: list[str]
     delta_count: int
-    committed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    blockchain_tx_id: Optional[str] = None
+    committed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    blockchain_tx_id: str | None = None
     committed_to: str = "local"
 
 
@@ -71,5 +70,5 @@ class CommitmentEngine:
         self._batch_queue.clear()
         return batch
 
-    def get_commitment(self, session_id: str) -> Optional[CommitmentRecord]:
+    def get_commitment(self, session_id: str) -> CommitmentRecord | None:
         return self._commitments.get(session_id)

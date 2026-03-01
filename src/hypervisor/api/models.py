@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from hypervisor.models import ConsistencyMode, ExecutionRing, ReversibilityLevel
-
+from hypervisor.models import ConsistencyMode
 
 # ── Session models ──────────────────────────────────────────────────────────
 
@@ -54,7 +53,7 @@ class SessionDetailResponse(BaseModel):
     participant_count: int
     participants: list[ParticipantInfo]
     created_at: str
-    terminated_at: Optional[str] = None
+    terminated_at: str | None = None
     sagas: list[dict[str, Any]] = []
 
 
@@ -72,7 +71,7 @@ class JoinSessionRequest(BaseModel):
     """Request body for joining a session."""
 
     agent_did: str = Field(..., description="DID of the joining agent")
-    actions: Optional[list[dict[str, Any]]] = None
+    actions: list[dict[str, Any]] | None = None
     sigma_raw: float = 0.0
 
 
@@ -143,8 +142,8 @@ class SagaDetailResponse(BaseModel):
     session_id: str
     state: str
     created_at: str
-    completed_at: Optional[str] = None
-    error: Optional[str] = None
+    completed_at: str | None = None
+    error: str | None = None
     steps: list[dict[str, Any]]
 
 
@@ -154,7 +153,7 @@ class AddStepRequest(BaseModel):
     action_id: str
     agent_did: str
     execute_api: str
-    undo_api: Optional[str] = None
+    undo_api: str | None = None
     timeout_seconds: int = 300
     max_retries: int = 0
 
@@ -174,7 +173,7 @@ class ExecuteStepResponse(BaseModel):
     step_id: str
     saga_id: str
     state: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # ── Liability models ────────────────────────────────────────────────────────
@@ -185,8 +184,8 @@ class CreateVouchRequest(BaseModel):
     voucher_did: str = Field(..., description="DID of the sponsorship agent")
     vouchee_did: str = Field(..., description="DID of the agent being vouched for")
     voucher_sigma: float = Field(..., description="Sponsor's raw reputation score")
-    bond_pct: Optional[float] = None
-    expiry: Optional[str] = None
+    bond_pct: float | None = None
+    expiry: str | None = None
 
 
 class VouchResponse(BaseModel):
@@ -218,9 +217,9 @@ class EventResponse(BaseModel):
     event_id: str
     event_type: str
     timestamp: str
-    session_id: Optional[str] = None
-    agent_did: Optional[str] = None
-    causal_trace_id: Optional[str] = None
+    session_id: str | None = None
+    agent_did: str | None = None
+    causal_trace_id: str | None = None
     payload: dict[str, Any] = {}
 
 
@@ -254,7 +253,7 @@ class CommitmentResponse(BaseModel):
     delta_count: int
     committed_at: str
     committed_to: str = "local"
-    blockchain_tx_id: Optional[str] = None
+    blockchain_tx_id: str | None = None
 
 class VerifyCommitmentResponse(BaseModel):
     session_id: str

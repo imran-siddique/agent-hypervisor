@@ -7,10 +7,9 @@ Community edition: elevation is not supported. All requests are denied.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from hypervisor.models import ExecutionRing
 
@@ -22,9 +21,9 @@ class RingElevationError(Exception):
         self,
         message: str,
         *,
-        current_ring: Optional[ExecutionRing] = None,
-        target_ring: Optional[ExecutionRing] = None,
-        reason: Optional[str] = None,
+        current_ring: ExecutionRing | None = None,
+        target_ring: ExecutionRing | None = None,
+        reason: str | None = None,
         agent_did: str = "",
     ) -> None:
         super().__init__(message)
@@ -64,9 +63,9 @@ class RingElevation:
     session_id: str = ""
     original_ring: ExecutionRing = ExecutionRing.RING_3_SANDBOX
     elevated_ring: ExecutionRing = ExecutionRing.RING_2_STANDARD
-    granted_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    expires_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    attestation: Optional[str] = None
+    granted_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    expires_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    attestation: str | None = None
     reason: str = ""
     is_active: bool = True
 
@@ -95,7 +94,7 @@ class RingElevationManager:
         current_ring: ExecutionRing,
         target_ring: ExecutionRing,
         ttl_seconds: int = 0,
-        attestation: Optional[str] = None,
+        attestation: str | None = None,
         reason: str = "",
     ) -> RingElevation:
         """Request temporary ring elevation (community edition: always denied)."""
@@ -146,7 +145,7 @@ class RingElevationManager:
             agent_did=agent_did,
         )
 
-    def get_active_elevation(self, agent_did: str, session_id: str) -> Optional[RingElevation]:
+    def get_active_elevation(self, agent_did: str, session_id: str) -> RingElevation | None:
         return None
 
     def get_effective_ring(self, agent_did: str, session_id: str, base_ring: ExecutionRing) -> ExecutionRing:

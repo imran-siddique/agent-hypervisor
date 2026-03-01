@@ -7,10 +7,11 @@ system with the Hypervisor. Supply your own verifier implementation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Optional, Protocol
+from typing import Any, Protocol
 
 
 class VerificationBackend(Protocol):
@@ -22,7 +23,7 @@ class VerificationBackend(Protocol):
         embedding_b: Any,
         metric: str = "cosine",
         weights: Any = None,
-        threshold_profile: Optional[str] = None,
+        threshold_profile: str | None = None,
         explain: bool = False,
     ) -> Any: ...
 
@@ -44,9 +45,9 @@ class DriftCheckResult:
     drift_score: float
     severity: DriftSeverity
     passed: bool
-    explanation: Optional[str] = None
-    action_id: Optional[str] = None
-    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    explanation: str | None = None
+    action_id: str | None = None
+    checked_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def should_slash(self) -> bool:
@@ -70,9 +71,9 @@ class VerificationAdapter:
 
     def __init__(
         self,
-        verifier: Optional[VerificationBackend] = None,
-        thresholds: Optional[DriftThresholds] = None,
-        on_drift_detected: Optional[Callable[[DriftCheckResult], None]] = None,
+        verifier: VerificationBackend | None = None,
+        thresholds: DriftThresholds | None = None,
+        on_drift_detected: Callable[[DriftCheckResult], None] | None = None,
     ) -> None:
         self._verifier = verifier
         self.thresholds = thresholds or DriftThresholds()
@@ -85,9 +86,9 @@ class VerificationAdapter:
         session_id: str,
         claimed_embedding: Any,
         observed_embedding: Any,
-        action_id: Optional[str] = None,
+        action_id: str | None = None,
         metric: str = "cosine",
-        threshold_profile: Optional[str] = None,
+        threshold_profile: str | None = None,
     ) -> DriftCheckResult:
         """Check for behavioral drift. Returns a pass-through result when no verifier is configured."""
         result = DriftCheckResult(
@@ -101,10 +102,10 @@ class VerificationAdapter:
         self._check_history.append(result)
         return result
 
-    def get_agent_drift_history(self, agent_did: str, session_id: Optional[str] = None) -> list[DriftCheckResult]:
+    def get_agent_drift_history(self, agent_did: str, session_id: str | None = None) -> list[DriftCheckResult]:
         return [r for r in self._check_history if r.agent_did == agent_did and (session_id is None or r.session_id == session_id)]
 
-    def get_drift_rate(self, agent_did: str, session_id: Optional[str] = None) -> float:
+    def get_drift_rate(self, agent_did: str, session_id: str | None = None) -> float:
         history = self.get_agent_drift_history(agent_did, session_id)
         if not history:
             return 0.0

@@ -8,11 +8,10 @@ No risk scoring, no admission decisions.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class LedgerEntryType(str, Enum):
@@ -37,10 +36,10 @@ class LedgerEntry:
     agent_did: str = ""
     entry_type: LedgerEntryType = LedgerEntryType.CLEAN_SESSION
     session_id: str = ""
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     severity: float = 0.0
     details: str = ""
-    related_agent: Optional[str] = None
+    related_agent: str | None = None
 
 
 @dataclass
@@ -79,7 +78,7 @@ class LiabilityLedger:
         session_id: str = "",
         severity: float = 0.0,
         details: str = "",
-        related_agent: Optional[str] = None,
+        related_agent: str | None = None,
     ) -> LedgerEntry:
         """Record a liability event."""
         entry = LedgerEntry(

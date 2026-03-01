@@ -7,11 +7,10 @@ Community edition: locks are not enforced. All acquire calls succeed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 
 
 class LockIntent(str, Enum):
@@ -31,9 +30,9 @@ class IntentLock:
     session_id: str = ""
     resource_path: str = ""
     intent: LockIntent = LockIntent.READ
-    acquired_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    acquired_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = True
-    saga_step_id: Optional[str] = None
+    saga_step_id: str | None = None
 
 
 class LockContentionError(Exception):
@@ -58,7 +57,7 @@ class IntentLockManager:
         session_id: str,
         resource_path: str,
         intent: LockIntent,
-        saga_step_id: Optional[str] = None,
+        saga_step_id: str | None = None,
     ) -> IntentLock:
         """Acquire a lock (community edition: always succeeds)."""
         lock = IntentLock(

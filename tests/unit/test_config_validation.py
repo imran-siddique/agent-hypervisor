@@ -1,11 +1,10 @@
 """Tests for input validation on agent configuration models."""
 
 import pytest
+
 from hypervisor.models import (
     ActionDescriptor,
-    ConsistencyMode,
     ExecutionRing,
-    ReversibilityLevel,
     SessionConfig,
     SessionParticipant,
 )

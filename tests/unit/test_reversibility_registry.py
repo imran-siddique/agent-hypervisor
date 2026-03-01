@@ -1,8 +1,7 @@
 """Tests for ReversibilityRegistry."""
 
-import pytest
 from hypervisor.models import ActionDescriptor, ReversibilityLevel
-from hypervisor.reversibility.registry import ReversibilityRegistry, ReversibilityEntry
+from hypervisor.reversibility.registry import ReversibilityEntry, ReversibilityRegistry
 
 
 class TestReversibilityRegistry:

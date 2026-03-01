@@ -8,8 +8,8 @@ engine with the Hypervisor. Supply your own scorer implementation.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional, Protocol
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 
 class NexusTrustScorer(Protocol):
@@ -19,8 +19,8 @@ class NexusTrustScorer(Protocol):
         self,
         verification_level: str,
         history: Any,
-        capabilities: Optional[dict] = None,
-        privacy: Optional[dict] = None,
+        capabilities: dict | None = None,
+        privacy: dict | None = None,
     ) -> Any: ...
 
     def slash_reputation(
@@ -28,8 +28,8 @@ class NexusTrustScorer(Protocol):
         agent_did: str,
         reason: str,
         severity: str,
-        evidence_hash: Optional[str] = None,
-        trace_id: Optional[str] = None,
+        evidence_hash: str | None = None,
+        trace_id: str | None = None,
         broadcast: bool = True,
     ) -> Any: ...
 
@@ -48,7 +48,7 @@ class NexusScoreResult:
     raw_nexus_score: int
     normalized_sigma: float
     tier: str
-    resolved_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    resolved_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class NexusAdapter:
@@ -59,7 +59,7 @@ class NexusAdapter:
 
     def __init__(
         self,
-        scorer: Optional[NexusTrustScorer] = None,
+        scorer: NexusTrustScorer | None = None,
         cache_ttl_seconds: int = 300,
     ) -> None:
         self._scorer = scorer
@@ -70,8 +70,8 @@ class NexusAdapter:
         self,
         agent_did: str,
         verification_level: str = "standard",
-        history: Optional[Any] = None,
-        capabilities: Optional[dict] = None,
+        history: Any | None = None,
+        capabilities: dict | None = None,
     ) -> float:
         """Resolve an agent's sigma. Returns 0.50 default when no scorer is configured."""
         if self._scorer is None:
@@ -89,7 +89,7 @@ class NexusAdapter:
         agent_did: str,
         reason: str,
         severity: str = "medium",
-        evidence_hash: Optional[str] = None,
+        evidence_hash: str | None = None,
     ) -> None:
         """Report a penalty event to the trust backend."""
         if self._scorer:

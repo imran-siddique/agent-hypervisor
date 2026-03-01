@@ -18,7 +18,6 @@ from hypervisor.core import Hypervisor
 from hypervisor.models import SessionConfig
 from hypervisor.security.kill_switch import KillSwitch
 
-
 # ── Fixtures ────────────────────────────────────────────────────────────
 
 

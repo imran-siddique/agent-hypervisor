@@ -8,10 +8,9 @@ No causal chain analysis.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -32,10 +31,10 @@ class AttributionResult:
     attribution_id: str = field(default_factory=lambda: f"attr:{uuid.uuid4().hex[:8]}")
     saga_id: str = ""
     session_id: str = ""
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     attributions: list[FaultAttribution] = field(default_factory=list)
     causal_chain_length: int = 0
-    root_cause_agent: Optional[str] = None
+    root_cause_agent: str | None = None
 
     @property
     def agents_involved(self) -> list[str]:
@@ -61,7 +60,7 @@ class CausalAttributor:
         agent_actions: dict[str, list[dict]],
         failure_step_id: str,
         failure_agent_did: str,
-        risk_weights: Optional[dict[str, float]] = None,
+        risk_weights: dict[str, float] | None = None,
     ) -> AttributionResult:
         """Assign full liability to the direct-cause agent."""
         attributions = []

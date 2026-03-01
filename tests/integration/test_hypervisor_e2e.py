@@ -8,23 +8,22 @@ session creation → agent join → saga execution → audit → termination →
 from __future__ import annotations
 
 import asyncio
+
 import pytest
-from datetime import datetime, timedelta, timezone
 
 from hypervisor import (
-    Hypervisor,
-    SessionConfig,
     ConsistencyMode,
     ExecutionRing,
+    Hypervisor,
     ReversibilityLevel,
     SagaState,
-    StepState,
     SagaTimeoutError,
+    SessionConfig,
+    StepState,
 )
-from hypervisor.models import ActionDescriptor
 from hypervisor.audit.delta import VFSChange
 from hypervisor.liability.vouching import VouchingError
-
+from hypervisor.models import ActionDescriptor
 
 # ---------------------------------------------------------------------------
 # Full Lifecycle

@@ -1,24 +1,19 @@
 """Tests for Shapley-value fault attribution, quarantine, and liability ledger."""
 
+
 import pytest
-from datetime import timedelta, datetime, timezone
 
 from hypervisor.liability.attribution import (
     CausalAttributor,
-    FaultAttribution,
-    AttributionResult,
+)
+from hypervisor.liability.ledger import (
+    LedgerEntryType,
+    LiabilityLedger,
 )
 from hypervisor.liability.quarantine import (
     QuarantineManager,
     QuarantineReason,
-    QuarantineRecord,
 )
-from hypervisor.liability.ledger import (
-    LiabilityLedger,
-    LedgerEntryType,
-    AgentRiskProfile,
-)
-
 
 # ── Fault Logging Tests ────────────────────────────────────
 

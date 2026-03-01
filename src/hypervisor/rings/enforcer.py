@@ -9,7 +9,6 @@ Ring 0 is reserved for kernel-only operations and always denied.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from hypervisor.models import ActionDescriptor, ExecutionRing
 

@@ -8,8 +8,7 @@ Community edition: simple token bucket rate limiting.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from hypervisor.models import ExecutionRing
 
@@ -25,7 +24,7 @@ class TokenBucket:
     capacity: float
     tokens: float
     refill_rate: float  # tokens per second
-    last_refill: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_refill: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def consume(self, tokens: float = 1.0) -> bool:
         """Try to consume tokens. Returns True if successful."""
@@ -37,7 +36,7 @@ class TokenBucket:
 
     def _refill(self) -> None:
         """Refill tokens based on elapsed time."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         elapsed = (now - self.last_refill).total_seconds()
         self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
         self.last_refill = now
@@ -79,7 +78,7 @@ class AgentRateLimiter:
 
     def __init__(
         self,
-        ring_limits: Optional[dict[ExecutionRing, tuple[float, float]]] = None,
+        ring_limits: dict[ExecutionRing, tuple[float, float]] | None = None,
     ) -> None:
         self._limits = ring_limits or dict(DEFAULT_RING_LIMITS)
         # (agent_did, session_id) -> TokenBucket
@@ -148,7 +147,7 @@ class AgentRateLimiter:
         if key in self._stats:
             self._stats[key].ring = new_ring
 
-    def get_stats(self, agent_did: str, session_id: str) -> Optional[RateLimitStats]:
+    def get_stats(self, agent_did: str, session_id: str) -> RateLimitStats | None:
         """Get rate limit stats for an agent."""
         key = f"{agent_did}:{session_id}"
         stats = self._stats.get(key)

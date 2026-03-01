@@ -14,32 +14,28 @@ Scenarios:
 
 from __future__ import annotations
 
-import asyncio
-import pytest
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
+
+import pytest
 
 from hypervisor import (
-    Hypervisor,
-    SessionConfig,
     ConsistencyMode,
     ExecutionRing,
-    ReversibilityLevel,
-)
-from hypervisor.models import ActionDescriptor
-from hypervisor.integrations.nexus_adapter import NexusAdapter, NexusScoreResult
-from hypervisor.integrations.verification_adapter import (
-    VerificationAdapter,
-    DriftCheckResult,
-    DriftSeverity,
-    DriftThresholds,
+    Hypervisor,
+    SessionConfig,
 )
 from hypervisor.integrations.iatp_adapter import (
     IATPAdapter,
     IATPTrustLevel,
-    ManifestAnalysis,
 )
-
+from hypervisor.integrations.nexus_adapter import NexusAdapter
+from hypervisor.integrations.verification_adapter import (
+    DriftCheckResult,
+    DriftSeverity,
+    DriftThresholds,
+    VerificationAdapter,
+)
 
 # ---------------------------------------------------------------------------
 # Mock Nexus ReputationEngine
@@ -58,7 +54,7 @@ class MockTrustScore:
 class MockReputationEngine:
     """Fake Nexus ReputationEngine for testing."""
 
-    def __init__(self, scores: Optional[dict[str, int]] = None) -> None:
+    def __init__(self, scores: dict[str, int] | None = None) -> None:
         self._scores: dict[str, int] = scores or {}
         self._outcomes: list[tuple[str, str]] = []
         self._slashes: list[dict[str, Any]] = []
@@ -70,8 +66,8 @@ class MockReputationEngine:
         self,
         verification_level: str = "standard",
         history: Any = None,
-        capabilities: Optional[dict] = None,
-        privacy: Optional[dict] = None,
+        capabilities: dict | None = None,
+        privacy: dict | None = None,
     ) -> MockTrustScore:
         # Return score based on history which carries agent_did
         agent_did = getattr(history, "agent_did", None) or "unknown"
@@ -86,8 +82,8 @@ class MockReputationEngine:
         agent_did: str,
         reason: str,
         severity: str = "medium",
-        evidence_hash: Optional[str] = None,
-        trace_id: Optional[str] = None,
+        evidence_hash: str | None = None,
+        trace_id: str | None = None,
         broadcast: bool = True,
     ) -> None:
         self._slashes.append({
@@ -112,13 +108,13 @@ class MockVerificationScore:
     """Mimics behavioral verification score."""
 
     drift_score: float
-    explanation: Optional[str] = None
+    explanation: str | None = None
 
 
 class MockVerificationBackend:
     """Fake Verification verifier for testing."""
 
-    def __init__(self, drift_scores: Optional[dict[str, float]] = None) -> None:
+    def __init__(self, drift_scores: dict[str, float] | None = None) -> None:
         self._drift_scores: dict[str, float] = drift_scores or {}
         self._default_drift: float = 0.05
 
@@ -131,7 +127,7 @@ class MockVerificationBackend:
         embedding_b: Any,
         metric: str = "cosine",
         weights: Any = None,
-        threshold_profile: Optional[str] = None,
+        threshold_profile: str | None = None,
         explain: bool = False,
     ) -> MockVerificationScore:
         # Use embedding_a as agent key for lookup
@@ -512,7 +508,7 @@ class TestVoucherCascadeWithNexus:
             "did:mesh:sponsor-A": 0.80,
             "did:mesh:rogue-B": 0.70,
         }
-        result = self.hv.slashing.slash(
+        self.hv.slashing.slash(
             vouchee_did="did:mesh:rogue-B",
             session_id=sid,
             vouchee_sigma=0.70,
@@ -709,7 +705,7 @@ class TestFullGovernancePipeline:
         )
         sid = session.sso.session_id
 
-        ring = await self.hv.join_session(sid, agent_did, sigma_raw=sigma)
+        await self.hv.join_session(sid, agent_did, sigma_raw=sigma)
         await self.hv.activate_session(sid)
 
         # All verification checks pass
@@ -897,9 +893,9 @@ class TestWiredHypervisor:
         })
         self.verification_backend = MockVerificationBackend()
 
+        from hypervisor.integrations.iatp_adapter import IATPAdapter
         from hypervisor.integrations.nexus_adapter import NexusAdapter
         from hypervisor.integrations.verification_adapter import VerificationAdapter
-        from hypervisor.integrations.iatp_adapter import IATPAdapter
 
         self.hv = Hypervisor(
             nexus=NexusAdapter(scorer=self.nexus_engine),

@@ -86,6 +86,16 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "B", "C4", "UP"]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E741",   # ambiguous variable name
+    "B904",   # raise-without-from-inside-except
+    "B017",   # assert-raises-exception
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["F401"]
 
 [tool.mypy]
 python_version = "3.11"

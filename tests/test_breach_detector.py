@@ -1,7 +1,6 @@
 """Tests for ring breach detector."""
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from hypervisor.models import ExecutionRing
 from hypervisor.rings.breach_detector import (
@@ -48,7 +47,7 @@ class TestBreachEvent:
         assert isinstance(event.timestamp, datetime)
 
     def test_creation_with_details(self):
-        ts = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        ts = datetime(2025, 1, 1, tzinfo=UTC)
         event = BreachEvent(
             agent_did="did:example:a",
             session_id="s1",

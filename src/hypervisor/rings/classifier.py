@@ -8,7 +8,6 @@ Classifies actions into ring levels and risk weights.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from hypervisor.models import ActionDescriptor, ExecutionRing, ReversibilityLevel
 
@@ -59,8 +58,8 @@ class ActionClassifier:
     def set_override(
         self,
         action_id: str,
-        ring: Optional[ExecutionRing] = None,
-        risk_weight: Optional[float] = None,
+        ring: ExecutionRing | None = None,
+        risk_weight: float | None = None,
     ) -> None:
         """Set a session-level override for action classification."""
         existing = self._cache.get(action_id)

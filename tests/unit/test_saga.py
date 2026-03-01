@@ -1,6 +1,8 @@
 """Tests for saga orchestrator and state machine."""
 
 import pytest
+
+from hypervisor.saga.orchestrator import SagaOrchestrator
 from hypervisor.saga.state_machine import (
     Saga,
     SagaState,
@@ -8,7 +10,6 @@ from hypervisor.saga.state_machine import (
     SagaStep,
     StepState,
 )
-from hypervisor.saga.orchestrator import SagaOrchestrator
 
 
 class TestStepStateMachine:

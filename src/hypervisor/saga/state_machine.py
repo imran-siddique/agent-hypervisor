@@ -8,10 +8,9 @@ with persistence support for crash recovery.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
-import uuid
+from typing import Any
 
 
 class StepState(str, Enum):
@@ -64,13 +63,13 @@ class SagaStep:
     action_id: str
     agent_did: str
     execute_api: str
-    undo_api: Optional[str] = None
+    undo_api: str | None = None
     state: StepState = StepState.PENDING
-    execute_result: Optional[Any] = None
-    compensation_result: Optional[Any] = None
-    error: Optional[str] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    execute_result: Any | None = None
+    compensation_result: Any | None = None
+    error: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     timeout_seconds: int = 300
     max_retries: int = 0
     retry_count: int = 0
@@ -84,7 +83,7 @@ class SagaStep:
                 f"Allowed: {[s.value for s in allowed]}"
             )
         self.state = new_state
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if new_state == StepState.EXECUTING:
             self.started_at = now
         elif new_state in (
@@ -104,9 +103,9 @@ class Saga:
     session_id: str
     steps: list[SagaStep] = field(default_factory=list)
     state: SagaState = SagaState.RUNNING
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    completed_at: datetime | None = None
+    error: str | None = None
 
     def transition(self, new_state: SagaState) -> None:
         """Transition the saga to a new state."""
@@ -118,7 +117,7 @@ class Saga:
             )
         self.state = new_state
         if new_state in (SagaState.COMPLETED, SagaState.FAILED, SagaState.ESCALATED):
-            self.completed_at = datetime.now(timezone.utc)
+            self.completed_at = datetime.now(UTC)
 
     @property
     def committed_steps(self) -> list[SagaStep]:

@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -21,9 +20,9 @@ class VFSChange:
 
     path: str
     operation: str
-    content_hash: Optional[str] = None
-    previous_hash: Optional[str] = None
-    agent_did: Optional[str] = None
+    content_hash: str | None = None
+    previous_hash: str | None = None
+    agent_did: str | None = None
 
 
 @dataclass
@@ -36,7 +35,7 @@ class SemanticDelta:
     agent_did: str
     timestamp: datetime
     changes: list[VFSChange]
-    parent_hash: Optional[str]
+    parent_hash: str | None
     delta_hash: str = ""
 
     def compute_hash(self) -> str:
@@ -72,7 +71,7 @@ class DeltaEngine:
         self,
         agent_did: str,
         changes: list[VFSChange],
-        delta_id: Optional[str] = None,
+        delta_id: str | None = None,
     ) -> SemanticDelta:
         """Capture a delta for a turn."""
         self._turn_counter += 1
@@ -81,7 +80,7 @@ class DeltaEngine:
             turn_id=self._turn_counter,
             session_id=self.session_id,
             agent_did=agent_did,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             changes=changes,
             parent_hash=None,
         )
@@ -89,7 +88,7 @@ class DeltaEngine:
         self._deltas.append(delta)
         return delta
 
-    def compute_hash_chain_root(self) -> Optional[str]:
+    def compute_hash_chain_root(self) -> str | None:
         """Return hash of last delta (community edition: no Merkle tree)."""
         if not self._deltas:
             return None

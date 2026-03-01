@@ -11,23 +11,12 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 from hypervisor import __version__
-from hypervisor.core import Hypervisor, ManagedSession
-from hypervisor.models import (
-    ActionDescriptor,
-    ExecutionRing,
-    ReversibilityLevel,
-    SessionConfig,
-)
-from hypervisor.observability.event_bus import EventType, HypervisorEventBus
-
 from hypervisor.api.models import (
     AddStepRequest,
     AddStepResponse,
@@ -51,19 +40,25 @@ from hypervisor.api.models import (
     SessionDetailResponse,
     SessionListItem,
     StatsResponse,
-    TransactionInput,
     VerifyCommitmentResponse,
     VerifyHistoryRequest,
     VerifyHistoryResponse,
     VouchResponse,
 )
+from hypervisor.core import Hypervisor, ManagedSession
+from hypervisor.models import (
+    ActionDescriptor,
+    ExecutionRing,
+    SessionConfig,
+)
+from hypervisor.observability.event_bus import EventType, HypervisorEventBus
 
 logger = logging.getLogger(__name__)
 
 # ── Global state ────────────────────────────────────────────────────────────
 
-_hypervisor: Optional[Hypervisor] = None
-_event_bus: Optional[HypervisorEventBus] = None
+_hypervisor: Hypervisor | None = None
+_event_bus: HypervisorEventBus | None = None
 
 
 def _hv() -> Hypervisor:
@@ -200,7 +195,7 @@ async def create_session(req: CreateSessionRequest) -> CreateSessionResponse:
 
 @app.get("/api/v1/sessions", response_model=list[SessionListItem], tags=["Sessions"])
 async def list_sessions(
-    state: Optional[str] = Query(None, description="Filter by session state"),
+    state: str | None = Query(None, description="Filter by session state"),
 ) -> list[SessionListItem]:
     """List all sessions, optionally filtered by state."""
     sessions = _hv()._sessions.values()
@@ -617,10 +612,10 @@ async def get_agent_liability(agent_did: str) -> LiabilityExposureResponse:
 
 @app.get("/api/v1/events", response_model=list[EventResponse], tags=["Events"])
 async def query_events(
-    event_type: Optional[str] = Query(None, description="Filter by event type"),
-    session_id: Optional[str] = Query(None, description="Filter by session ID"),
-    agent_did: Optional[str] = Query(None, description="Filter by agent DID"),
-    limit: Optional[int] = Query(None, description="Max events to return"),
+    event_type: str | None = Query(None, description="Filter by event type"),
+    session_id: str | None = Query(None, description="Filter by session ID"),
+    agent_did: str | None = Query(None, description="Filter by agent DID"),
+    limit: int | None = Query(None, description="Max events to return"),
 ) -> list[EventResponse]:
     """Query events with optional filters."""
     bus = _bus()

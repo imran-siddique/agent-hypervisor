@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 from hypervisor.models import (
@@ -34,7 +34,7 @@ class SharedSessionObject:
         self,
         config: SessionConfig,
         creator_did: str,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
     ):
         self.session_id = session_id or f"session:{uuid.uuid4()}"
         self.creator_did = creator_did
@@ -51,8 +51,8 @@ class SharedSessionObject:
         self._vfs_snapshots: dict[str, Any] = {}
 
         # Timestamps
-        self.created_at = datetime.now(timezone.utc)
-        self.terminated_at: Optional[datetime] = None
+        self.created_at = datetime.now(UTC)
+        self.terminated_at: datetime | None = None
 
     @property
     def participants(self) -> list[SessionParticipant]:
@@ -138,14 +138,14 @@ class SharedSessionObject:
         """Begin session termination."""
         self._assert_state(SessionState.ACTIVE, SessionState.HANDSHAKING)
         self.state = SessionState.TERMINATING
-        self.terminated_at = datetime.now(timezone.utc)
+        self.terminated_at = datetime.now(UTC)
 
     def archive(self) -> None:
         """Archive the session after audit commitment."""
         self._assert_state(SessionState.TERMINATING)
         self.state = SessionState.ARCHIVED
 
-    def create_vfs_snapshot(self, snapshot_id: Optional[str] = None) -> str:
+    def create_vfs_snapshot(self, snapshot_id: str | None = None) -> str:
         """Create a VFS state snapshot for rollback.
 
         Captures both VFS file state (snapshot) and participant metadata.
@@ -155,7 +155,7 @@ class SharedSessionObject:
         sid = self.vfs.create_snapshot(snapshot_id)
         # Also snapshot participant metadata for full restore
         self._vfs_snapshots[sid] = {
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "participant_states": {
                 did: {"ring": p.ring.value, "eff_score": p.eff_score}
                 for did, p in self._participants.items()

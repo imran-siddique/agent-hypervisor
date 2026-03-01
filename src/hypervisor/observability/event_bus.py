@@ -8,11 +8,12 @@ full replay debugging, post-mortem analysis, and real-time monitoring.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Callable, Optional
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 
 class EventType(str, Enum):
@@ -81,11 +82,11 @@ class HypervisorEvent:
 
     event_id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
     event_type: EventType = EventType.SESSION_CREATED
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    session_id: Optional[str] = None
-    agent_did: Optional[str] = None
-    causal_trace_id: Optional[str] = None
-    parent_event_id: Optional[str] = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    session_id: str | None = None
+    agent_did: str | None = None
+    causal_trace_id: str | None = None
+    parent_event_id: str | None = None
     payload: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -118,7 +119,7 @@ class HypervisorEventBus:
 
     def __init__(self) -> None:
         self._events: list[HypervisorEvent] = []
-        self._subscribers: dict[Optional[EventType], list[EventHandler]] = {}
+        self._subscribers: dict[EventType | None, list[EventHandler]] = {}
         self._by_type: dict[EventType, list[HypervisorEvent]] = {}
         self._by_session: dict[str, list[HypervisorEvent]] = {}
         self._by_agent: dict[str, list[HypervisorEvent]] = {}
@@ -148,8 +149,8 @@ class HypervisorEventBus:
 
     def subscribe(
         self,
-        event_type: Optional[EventType] = None,
-        handler: Optional[EventHandler] = None,
+        event_type: EventType | None = None,
+        handler: EventHandler | None = None,
     ) -> None:
         """Subscribe to events. Use event_type=None for all events."""
         if handler:
@@ -170,19 +171,19 @@ class HypervisorEventBus:
     def query_by_time_range(
         self,
         start: datetime,
-        end: Optional[datetime] = None,
+        end: datetime | None = None,
     ) -> list[HypervisorEvent]:
         """Get events within a time range."""
         if end is None:
-            end = datetime.now(timezone.utc)
+            end = datetime.now(UTC)
         return [e for e in self._events if start <= e.timestamp <= end]
 
     def query(
         self,
-        event_type: Optional[EventType] = None,
-        session_id: Optional[str] = None,
-        agent_did: Optional[str] = None,
-        limit: Optional[int] = None,
+        event_type: EventType | None = None,
+        session_id: str | None = None,
+        agent_did: str | None = None,
+        limit: int | None = None,
     ) -> list[HypervisorEvent]:
         """Flexible query with multiple filters."""
         results = self._events

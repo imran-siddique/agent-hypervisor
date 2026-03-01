@@ -1,15 +1,15 @@
 """Tests for the observability event bus and causal trace IDs."""
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
+import pytest
+
+from hypervisor.observability.causal_trace import CausalTraceId
 from hypervisor.observability.event_bus import (
     EventType,
     HypervisorEvent,
     HypervisorEventBus,
 )
-from hypervisor.observability.causal_trace import CausalTraceId
-
 
 # ── Event Bus Tests ─────────────────────────────────────────────
 
@@ -138,7 +138,7 @@ class TestHypervisorEventBus:
 
     def test_query_by_time_range(self):
         bus = HypervisorEventBus()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         bus.emit(HypervisorEvent(event_type=EventType.SESSION_CREATED))
         results = bus.query_by_time_range(now - timedelta(seconds=1))
         assert len(results) == 1
@@ -210,6 +210,6 @@ class TestCausalTraceId:
 
     def test_deep_nesting(self):
         trace = CausalTraceId()
-        for i in range(5):
+        for _i in range(5):
             trace = trace.child()
         assert trace.depth == 5

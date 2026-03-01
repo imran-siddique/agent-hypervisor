@@ -1,8 +1,9 @@
 """Tests for the sponsorship & bonding engine and liability matrix."""
 
 import pytest
-from hypervisor.liability.vouching import VouchingEngine, VouchingError
+
 from hypervisor.liability import LiabilityMatrix
+from hypervisor.liability.vouching import VouchingEngine, VouchingError
 
 
 class TestVouchingEngine:

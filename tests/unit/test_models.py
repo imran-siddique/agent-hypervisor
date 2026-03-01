@@ -1,14 +1,9 @@
 """Tests for core models."""
 
-import pytest
 from hypervisor.models import (
     ActionDescriptor,
-    ConsistencyMode,
     ExecutionRing,
     ReversibilityLevel,
-    SessionConfig,
-    SessionParticipant,
-    SessionState,
 )
 
 

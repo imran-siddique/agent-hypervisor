@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
-import uuid
 
 # Agent ID must be alphanumeric, hyphens, underscores, colons, or dots (e.g. "did:mesh:agent-1")
 _AGENT_ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._:@-]*$")
@@ -174,7 +172,7 @@ class SessionParticipant:
     ring: ExecutionRing = ExecutionRing.RING_3_SANDBOX
     sigma_raw: float = 0.0
     eff_score: float = 0.0
-    joined_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    joined_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = True
 
     def __post_init__(self) -> None:
@@ -211,10 +209,10 @@ class ActionDescriptor:
     action_id: str
     name: str
     execute_api: str
-    undo_api: Optional[str] = None
+    undo_api: str | None = None
     reversibility: ReversibilityLevel = ReversibilityLevel.NONE
     undo_window_seconds: int = 0
-    compensation_method: Optional[str] = None
+    compensation_method: str | None = None
     is_read_only: bool = False
     is_admin: bool = False
 

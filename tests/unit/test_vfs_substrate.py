@@ -9,13 +9,13 @@ Acceptance Criteria:
 """
 
 import pytest
-from hypervisor.models import ConsistencyMode, ExecutionRing, SessionConfig
-from hypervisor.session import (
-    SharedSessionObject,
-    SessionLifecycleError,
-)
-from hypervisor.session.sso import SessionVFS, VFSEdit, VFSPermissionError
 
+from hypervisor.models import ExecutionRing, SessionConfig
+from hypervisor.session import (
+    SessionLifecycleError,
+    SharedSessionObject,
+)
+from hypervisor.session.sso import SessionVFS, VFSPermissionError
 
 # ---------------------------------------------------------------------------
 # SessionVFS — Core read/write operations

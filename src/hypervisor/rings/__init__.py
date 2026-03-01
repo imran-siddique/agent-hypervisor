@@ -1,7 +1,12 @@
 """Execution rings subpackage — enforcement, classification, elevation, breach detection."""
 
-from hypervisor.rings.elevation import RingElevationManager, RingElevation, RingElevationError, ElevationDenialReason
-from hypervisor.rings.breach_detector import RingBreachDetector, BreachEvent, BreachSeverity
+from hypervisor.rings.breach_detector import BreachEvent, BreachSeverity, RingBreachDetector
+from hypervisor.rings.elevation import (
+    ElevationDenialReason,
+    RingElevation,
+    RingElevationError,
+    RingElevationManager,
+)
 
 __all__ = [
     "RingElevationManager",

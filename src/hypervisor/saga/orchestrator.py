@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from hypervisor.saga.state_machine import (
     Saga,
@@ -55,7 +56,7 @@ class SagaOrchestrator:
         action_id: str,
         agent_did: str,
         execute_api: str,
-        undo_api: Optional[str] = None,
+        undo_api: str | None = None,
         timeout_seconds: int = 300,
         max_retries: int = 0,
     ) -> SagaStep:
@@ -97,7 +98,7 @@ class SagaOrchestrator:
         saga = self._get_saga(saga_id)
         step = self._get_step(saga, step_id)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         attempts = 1 + step.max_retries
 
         for attempt in range(attempts):
@@ -111,7 +112,7 @@ class SagaOrchestrator:
                 step.execute_result = result
                 step.transition(StepState.COMMITTED)
                 return result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = SagaTimeoutError(
                     f"Step {step_id} timed out after {step.timeout_seconds}s "
                     f"(attempt {attempt + 1}/{attempts})"
@@ -176,7 +177,7 @@ class SagaOrchestrator:
                 )
                 step.compensation_result = result
                 step.transition(StepState.COMPENSATED)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 step.error = f"Compensation timed out after {step.timeout_seconds}s"
                 step.transition(StepState.COMPENSATION_FAILED)
                 failed_compensations.append(step)
@@ -196,7 +197,7 @@ class SagaOrchestrator:
 
         return failed_compensations
 
-    def get_saga(self, saga_id: str) -> Optional[Saga]:
+    def get_saga(self, saga_id: str) -> Saga | None:
         """Get a saga by ID."""
         return self._sagas.get(saga_id)
 

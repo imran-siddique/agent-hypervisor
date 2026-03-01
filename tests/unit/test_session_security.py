@@ -1,32 +1,28 @@
 """Tests for version counters, resource locks, isolation levels, rate limiter, and kill switch."""
 
+
 import pytest
-from datetime import timedelta, datetime, timezone
 
 from hypervisor.models import ExecutionRing
-from hypervisor.session.vector_clock import (
-    VectorClock,
-    VectorClockManager,
-    CausalViolationError,
+from hypervisor.security.kill_switch import (
+    HandoffStatus,
+    KillReason,
+    KillSwitch,
 )
-from hypervisor.session.intent_locks import (
-    IntentLockManager,
-    LockIntent,
-    LockContentionError,
-    DeadlockError,
-)
-from hypervisor.session.isolation import IsolationLevel
 from hypervisor.security.rate_limiter import (
     AgentRateLimiter,
     RateLimitExceeded,
     TokenBucket,
 )
-from hypervisor.security.kill_switch import (
-    KillSwitch,
-    KillReason,
-    HandoffStatus,
+from hypervisor.session.intent_locks import (
+    IntentLockManager,
+    LockIntent,
 )
-
+from hypervisor.session.isolation import IsolationLevel
+from hypervisor.session.vector_clock import (
+    VectorClock,
+    VectorClockManager,
+)
 
 # ── Version Counter Tests ──────────────────────────────────────────
 

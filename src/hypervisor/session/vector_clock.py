@@ -9,8 +9,6 @@ VectorClock and VectorClockManager are retained for API compatibility.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
-import copy
 
 
 class CausalViolationError(Exception):

@@ -8,12 +8,12 @@ Fan-out groups in DSL are ignored (sequential execution only).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
 import uuid
+from dataclasses import dataclass, field
+from typing import Any
 
 from hypervisor.saga.fan_out import FanOutPolicy
-from hypervisor.saga.schema import SagaSchemaValidator, SagaSchemaError
+from hypervisor.saga.schema import SagaSchemaValidator
 from hypervisor.saga.state_machine import SagaStep
 
 
@@ -25,10 +25,10 @@ class SagaDSLStep:
     action_id: str = ""
     agent: str = ""
     execute_api: str = ""
-    undo_api: Optional[str] = None
+    undo_api: str | None = None
     timeout: int = 300
     retries: int = 0
-    checkpoint_goal: Optional[str] = None
+    checkpoint_goal: str | None = None
 
 
 @dataclass

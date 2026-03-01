@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any, Optional
+from typing import Any
 
 from hypervisor.cli.formatters import format_output
 from hypervisor.core import Hypervisor, ManagedSession
@@ -105,7 +105,7 @@ def cmd_kill(
     hv: Hypervisor,
     session_id: str,
     fmt: str,
-    kill_switch: Optional[KillSwitch] = None,
+    kill_switch: KillSwitch | None = None,
 ) -> str:
     """Trigger kill switch on all agents in a session."""
     managed = hv.get_session(session_id)
@@ -133,7 +133,7 @@ def cmd_kill(
 
 
 def build_parser(
-    parent: Optional[argparse._SubParsersAction] = None,
+    parent: argparse._SubParsersAction | None = None,
 ) -> argparse.ArgumentParser:
     """Build the 'session' sub-command parser."""
     if parent is not None:
@@ -165,7 +165,7 @@ def build_parser(
 def dispatch(
     args: argparse.Namespace,
     hv: Hypervisor,
-    kill_switch: Optional[KillSwitch] = None,
+    kill_switch: KillSwitch | None = None,
 ) -> str:
     """Dispatch a parsed session command to the appropriate handler."""
     fmt = getattr(args, "output_format", "table")
@@ -181,7 +181,7 @@ def dispatch(
         return "Error: specify a sub-command (list, inspect, kill)."
 
 
-def main(argv: Optional[list[str]] = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     """Entry point for the CLI."""
     top = argparse.ArgumentParser(prog="hypervisor")
     sub = top.add_subparsers(dest="command")

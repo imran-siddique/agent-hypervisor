@@ -17,6 +17,22 @@ Version: 2.0.0
 __version__ = "2.0.1"
 
 # Core models
+from hypervisor.audit.commitment import CommitmentEngine
+
+# Audit
+from hypervisor.audit.delta import DeltaEngine
+from hypervisor.audit.gc import EphemeralGC
+
+# Top-level orchestrator
+from hypervisor.core import Hypervisor
+from hypervisor.liability import LiabilityMatrix
+from hypervisor.liability.attribution import AttributionResult, CausalAttributor
+from hypervisor.liability.ledger import LedgerEntryType, LiabilityLedger
+from hypervisor.liability.quarantine import QuarantineManager, QuarantineReason
+from hypervisor.liability.slashing import SlashingEngine
+
+# Liability engine
+from hypervisor.liability.vouching import VouchingEngine, VouchRecord
 from hypervisor.models import (
     ConsistencyMode,
     ExecutionRing,
@@ -24,56 +40,45 @@ from hypervisor.models import (
     SessionConfig,
     SessionState,
 )
+from hypervisor.observability.causal_trace import CausalTraceId
 
-# Session management
-from hypervisor.session import SharedSessionObject
-from hypervisor.session.sso import SessionVFS, VFSEdit, VFSPermissionError
-from hypervisor.session.vector_clock import VectorClock, VectorClockManager, CausalViolationError
-from hypervisor.session.intent_locks import IntentLockManager, LockIntent, LockContentionError, DeadlockError
-from hypervisor.session.isolation import IsolationLevel
-
-# Liability engine
-from hypervisor.liability.vouching import VouchRecord, VouchingEngine
-from hypervisor.liability.slashing import SlashingEngine
-from hypervisor.liability import LiabilityMatrix
-from hypervisor.liability.attribution import CausalAttributor, AttributionResult
-from hypervisor.liability.quarantine import QuarantineManager, QuarantineReason
-from hypervisor.liability.ledger import LiabilityLedger, LedgerEntryType
-
-# Execution rings
-from hypervisor.rings.enforcer import RingEnforcer
-from hypervisor.rings.classifier import ActionClassifier
-from hypervisor.rings.elevation import RingElevationManager, RingElevation, ElevationDenialReason
-from hypervisor.rings.breach_detector import RingBreachDetector, BreachSeverity
+# Observability
+from hypervisor.observability.event_bus import EventType, HypervisorEvent, HypervisorEventBus
 
 # Reversibility
 from hypervisor.reversibility.registry import ReversibilityRegistry
+from hypervisor.rings.breach_detector import BreachSeverity, RingBreachDetector
+from hypervisor.rings.classifier import ActionClassifier
+from hypervisor.rings.elevation import ElevationDenialReason, RingElevation, RingElevationManager
+
+# Execution rings
+from hypervisor.rings.enforcer import RingEnforcer
+from hypervisor.saga.checkpoint import CheckpointManager, SemanticCheckpoint
+from hypervisor.saga.dsl import SagaDefinition, SagaDSLParser
+from hypervisor.saga.fan_out import FanOutOrchestrator, FanOutPolicy
 
 # Saga
 from hypervisor.saga.orchestrator import SagaOrchestrator, SagaTimeoutError
 from hypervisor.saga.state_machine import SagaState, StepState
-from hypervisor.saga.fan_out import FanOutOrchestrator, FanOutPolicy
-from hypervisor.saga.checkpoint import CheckpointManager, SemanticCheckpoint
-from hypervisor.saga.dsl import SagaDSLParser, SagaDefinition
-
-# Audit
-from hypervisor.audit.delta import DeltaEngine
-from hypervisor.audit.commitment import CommitmentEngine
-from hypervisor.audit.gc import EphemeralGC
-
-# Verification
-from hypervisor.verification.history import TransactionHistoryVerifier
-
-# Observability
-from hypervisor.observability.event_bus import HypervisorEventBus, EventType, HypervisorEvent
-from hypervisor.observability.causal_trace import CausalTraceId
+from hypervisor.security.kill_switch import KillResult, KillSwitch
 
 # Security
 from hypervisor.security.rate_limiter import AgentRateLimiter, RateLimitExceeded
-from hypervisor.security.kill_switch import KillSwitch, KillResult
 
-# Top-level orchestrator
-from hypervisor.core import Hypervisor
+# Session management
+from hypervisor.session import SharedSessionObject
+from hypervisor.session.intent_locks import (
+    DeadlockError,
+    IntentLockManager,
+    LockContentionError,
+    LockIntent,
+)
+from hypervisor.session.isolation import IsolationLevel
+from hypervisor.session.sso import SessionVFS, VFSEdit, VFSPermissionError
+from hypervisor.session.vector_clock import CausalViolationError, VectorClock, VectorClockManager
+
+# Verification
+from hypervisor.verification.history import TransactionHistoryVerifier
 
 __all__ = [
     # Version
