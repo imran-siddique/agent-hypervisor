@@ -13,7 +13,7 @@
 [![CI](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/imran-siddique/agent-hypervisor/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/agent-hypervisor)](https://pypi.org/project/agent-hypervisor/)
 [![Downloads](https://img.shields.io/pypi/dm/agent-hypervisor)](https://pypi.org/project/agent-hypervisor/)
-[![OWASP](https://img.shields.io/badge/OWASP_ASI10-Rogue_Agents-brightgreen)](https://genai.owasp.org)
+[![OWASP](https://img.shields.io/badge/OWASP_Agentic_Top_10-ASI--05,_10-brightgreen)](https://github.com/imran-siddique/agent-governance/blob/master/docs/OWASP-COMPLIANCE.md)
 [![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)](https://github.com/imran-siddique/agent-hypervisor)
 [![Benchmark](https://img.shields.io/badge/latency-268%CE%BCs%20pipeline-orange)](benchmarks/)
 [![Discussions](https://img.shields.io/github/discussions/imran-siddique/agent-hypervisor)](https://github.com/imran-siddique/agent-hypervisor/discussions)
