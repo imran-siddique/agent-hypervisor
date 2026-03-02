@@ -55,6 +55,7 @@ dev = [
     "hypothesis>=6.0.0",
     "ruff>=0.4.0",
     "mypy>=1.8.0",
+    "jsonschema>=4.0.0",
 ]
 blockchain = [
     "web3>=6.0.0",  # Reserved for future blockchain anchoring — not yet used
